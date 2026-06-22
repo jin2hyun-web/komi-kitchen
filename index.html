@@ -309,6 +309,14 @@ const FOOD_ART = {
   "생강":"food_ginger","파프리카":"food_paprika","사과":"food_apple","귤":"food_tangerine",
   "바나나":"food_banana","딸기":"food_strawberry","포도":"food_grape","버터":"food_butter",
   "요거트":"food_yogurt","식빵":"food_bread","떡":"food_tteok",
+  // 옵션형(대분류) 대표 아이콘
+  "파스타소스":"food_pastasauce","잼":"food_jam","만두":"food_mandu",
+};
+// 대분류 1개 + 옵션 (담을 땐 "파스타소스(크림)"처럼 저장)
+const OPTIONS = {
+  "파스타소스":["토마토","크림","로제","미트"],
+  "잼":["딸기","포도","블루베리","사과"],
+  "만두":["고기","김치","새우","물"],
 };
 // fallback colored swatch for ingredients without art (김치, 고춧가루…)
 const SWATCH = {
@@ -326,9 +334,10 @@ const LOCATIONS = [
 
 /* ---------- ingredient art helper ---------- */
 function ingIcon(name, size=42){
-  const art = FOOD_ART[name];
-  if(art) return `<img src="${asset(art+".png")}" style="width:${size}px;height:${size}px;" alt="${name}">`;
-  const c = SWATCH[name] || "#caa877";
+  const base = (""+(name||"")).replace(/\s*\(.*\)\s*$/,"");   // "파스타소스(크림)" → "파스타소스"
+  const art = FOOD_ART[name] || FOOD_ART[base];
+  if(art) return `<img src="${asset(art+".png")}" style="width:${size}px;height:${size}px;" alt="${esc(name)}">`;
+  const c = SWATCH[name] || SWATCH[base] || "#caa877";
   const s = Math.round(size*0.42);
   return `<span class="sw" style="width:${s}px;height:${s}px;background:${c};border:1px solid var(--line);border-radius:4px;display:inline-block;"></span>`;
 }
@@ -480,16 +489,17 @@ function curChat(){ return S.chatWho==='komimi' ? S.chatMimi : S.chat; }
 /* ====================  HELPERS  ==================== */
 const $ = (s,el=document)=>el.querySelector(s);
 const esc = (s="")=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function invNames(){ return new Set(S.inv.map(i=>i.name)); }
+function invNames(){ return new Set(S.inv.filter(i=>i.loc!=='done').map(i=>i.name)); }
+function doneDishes(){ return S.inv.filter(i=>i.loc==='done'); }
 function freshness(it){ // returns {dot, label, color}
   if(it.dday<=1) return {color:"var(--terra)", label:"D-"+it.dday, soon:true};
   if(it.dday<=2) return {color:"var(--amber)", label:"D-"+it.dday, soon:true};
   return {color:"var(--green)", label:"신선", soon:false};
 }
-function soonItems(){ return S.inv.filter(i=>i.dday<=2); }
+function soonItems(){ return S.inv.filter(i=>i.loc!=='done' && i.dday<=2); }
 function qtyNum(q){ const m=(""+(q||"")).match(/\d+/); return m?+m[0]:1; }
 // 재고가 많은 재료(양념장 제외, 5개 이상) — 과잉재고 소진 추천에 사용
-function overItems(){ return S.inv.filter(i=>i.loc!=='sauce' && qtyNum(i.qty)>=5); }
+function overItems(){ return S.inv.filter(i=>i.loc!=='sauce' && i.loc!=='done' && qtyNum(i.qty)>=5); }
 
 // how many of a recipe's ingredients you own + 임박/과잉 신호
 function recipeMatch(r){
@@ -594,8 +604,10 @@ function recipeCard(r,m){
 
 /* ---------- FRIDGE (inventory) ---------- */
 function viewFridge(){
+  const TABS = [...LOCATIONS, {key:"done", label:"완성요리", icon:asset("food_cookedrice.png")}];
+  const isDone = S.invTab==='done';
   const items = S.inv.filter(i=>i.loc===S.invTab);
-  const fresh = S.inv.filter(i=>i.dday>2).length;
+  const fresh = S.inv.filter(i=>i.loc!=='done' && i.dday>2).length;
   const soon = soonItems().length;
   return `
   <div class="pad">
@@ -607,17 +619,26 @@ function viewFridge(){
       </div>
     </div>
     <div class="tabs">
-      ${LOCATIONS.map(l=>`<button class="tab ${S.invTab===l.key?'on':''}" data-tab="${l.key}"><img src="${l.icon}">${l.label}</button>`).join("")}
+      ${TABS.map(l=>`<button class="tab ${S.invTab===l.key?'on':''}" data-tab="${l.key}"><img src="${l.icon}">${l.label}</button>`).join("")}
     </div>
     <div class="grid">
       ${items.map(invCell).join("")}
-      <div class="cell add" data-add><img src="${ICON.plus}"><div class="nm">추가</div></div>
+      ${isDone?'':`<div class="cell add" data-add><img src="${ICON.plus}"><div class="nm">추가</div></div>`}
     </div>
-    ${items.length===0?'<div class="empty">아직 여긴 비어있어요.<br>+ 버튼으로 재료를 채워볼까요? 🐻</div>':''}
+    ${items.length===0?`<div class="empty">${isDone?'아직 만든 요리가 없어요.<br>레시피에서 “요리 시작하기”를 누르면<br>여기에 몇 인분으로 쌓여요! 🍳':'아직 여긴 비어있어요.<br>+ 버튼으로 재료를 채워볼까요? 🐻'}</div>`:''}
   </div>`;
 }
 function invCell(it){
   const f = freshness(it);
+  if(it.loc==='done'){
+    return `
+    <button class="cell" data-dish="${it.id}">
+      <div class="dot" style="background:${f.color}"></div>
+      <div class="ico">${it.art?`<img src="${asset(it.art+".png")}" style="width:42px;height:42px;">`:ingIcon(it.name,42)}</div>
+      <div class="nm">${esc(it.name)}</div>
+      <div class="qt" style="color:var(--green-d)">${esc(it.qty)}</div>
+    </button>`;
+  }
   return `
   <button class="cell" data-item="${it.id}">
     <div class="dot" style="background:${f.color}"></div>
@@ -797,15 +818,15 @@ let addState = null;
 // 카테고리별 빠른 선택 (아이콘 등록)
 const CATS = [
   {key:"veg",   label:"🥬 채소",      items:["당근","양파","대파","감자","토마토","애호박","오이","무","배추","양배추","시금치","상추","깻잎","부추","고추","브로콜리","콩나물","버섯","파프리카","가지","마늘","생강"]},
-  {key:"meat",  label:"🍖 고기·해산물", items:["돼지고기","소고기","닭고기","계란","고등어","새우","햄","어묵","베이컨","소세지"]},
+  {key:"meat",  label:"🍖 고기·해산물", items:["돼지고기","소고기","닭고기","계란","고등어","새우","햄","어묵","베이컨","소세지","만두"]},
   {key:"grain", label:"🌾 가루·면·밥",  items:["쌀","밥","밀가루","쌀가루","부침가루","전분","설탕","소금","소면","당면","파스타면","옥수수면","우동","라면","떡","식빵"]},
-  {key:"sauce", label:"🧂 양념·소스",   items:["간장","고추장","된장","쌈장","고춧가루","식용유","참기름","굴소스","케첩","마요네즈","식초","카레"]},
-  {key:"can",   label:"🥫 유제품·기타", items:["우유","치즈","버터","요거트","두부","김치","김","참치캔","옥수수캔"]},
+  {key:"sauce", label:"🧂 양념·소스",   items:["간장","고추장","된장","쌈장","고춧가루","식용유","참기름","굴소스","케첩","마요네즈","식초","카레","파스타소스"]},
+  {key:"can",   label:"🥫 유제품·기타", items:["우유","치즈","버터","요거트","두부","김치","김","참치캔","옥수수캔","잼"]},
   {key:"fruit", label:"🍎 과일",        items:["사과","귤","바나나","딸기","포도"]},
 ];
 const ALL_PICK = new Set(CATS.flatMap(c=>c.items));
 function openAdd(){
-  addState = { mode:"pick", cat:"veg", name:"당근", count:1, unit:"개", loc:"fridge", dday:7,
+  addState = { mode:"pick", cat:"veg", name:"당근", opt:null, count:1, unit:"개", loc:"fridge", dday:7,
                quick:"", scanItems:null, scanning:false, scanErr:"", batchLoc:"fridge" };
   renderAdd();
 }
@@ -871,6 +892,11 @@ function renderAdd(){
         <label>이름</label>
         <input id="customName" placeholder="예) 양배추…" value="${a.name && !ALL_PICK.has(a.name)?esc(a.name):''}">
       </div>
+      ${OPTIONS[a.name] ? `
+      <div class="lbl">종류 — ${esc(a.name)}</div>
+      <div class="loc-row">
+        ${OPTIONS[a.name].map(o=>`<button class="${a.opt===o?'on':''}" data-opt="${o}">${o}</button>`).join("")}
+      </div>` : ''}
       <div class="lbl">수량</div>
       <div class="field" style="justify-content:space-between">
         <div class="stepper">
@@ -957,7 +983,8 @@ function renderAdd(){
       closeSheet(); S.invTab=a.loc; S.screen="fridge"; render(); toast(`${n}개 담았어요! 🧺`);
     };
     sheet.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{ a.cat=b.dataset.cat; renderAdd(); });
-    sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
+    sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; a.opt=OPTIONS[a.name]?OPTIONS[a.name][0]:null; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
+    sheet.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{ a.opt=b.dataset.opt; renderAdd(); });
     sheet.querySelectorAll("[data-loc]").forEach(b=>b.onclick=()=>{ a.loc=b.dataset.loc; renderAdd(); });
     sheet.querySelectorAll("[data-cnt]").forEach(b=>b.onclick=()=>{ a.count=Math.max(1,a.count+(+b.dataset.cnt)); renderAdd(); });
     sheet.querySelectorAll("[data-dd]").forEach(b=>b.onclick=()=>{ a.dday=Math.max(0,Math.min(365,a.dday+(+b.dataset.dd))); renderAdd(); });
@@ -1002,7 +1029,9 @@ function scanReceipt(file){
 
 function confirmAdd(){
   const a = addState;
-  const name = (($("#customName")&&$("#customName").value.trim()) || a.name || "").trim();
+  const typed = ($("#customName")&&$("#customName").value.trim()) || "";
+  let name = (typed || a.name || "").trim();
+  if(!typed && OPTIONS[a.name] && a.opt) name = `${a.name}(${a.opt})`;  // 파스타소스(크림)
   if(!name){ toast("재료 이름을 정해줘 🐻"); return; }
   const unit = ($("#unitInput")&&$("#unitInput").value.trim())||a.unit||"개";
   const exist = S.inv.find(i=>i.name===name && i.loc===a.loc);
@@ -1104,10 +1133,92 @@ function openRecipe(id){
         <button class="cta green" id="cookBtn"><img src="${ICON.clockLt}">요리 시작하기</button>
       </div>
     </div>`;
-  $("#cookBtn").onclick = ()=>{
-    closeSheet();
-    toast(`${r.name} 시작! 맛있게 만들어요 🍳`);
+  $("#cookBtn").onclick = ()=>openCook(r);
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+}
+
+/* ====================  COOK → 완성요리  ==================== */
+let cookState = null;
+function openCook(r){ cookState = { r, n:r.servings||2, deduct:false }; renderCook(); }
+function renderCook(){
+  const c = cookState, r = c.r;
+  const have = invNames();
+  const usable = r.ingredients.filter(x=>have.has(x.n)).map(x=>x.n);
+  const sheet = $("#sheet"); sheet.classList.add("open");
+  sheet.innerHTML = `
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <div class="sheet-head"><button class="back" data-close>‹</button><div class="t">요리 완성!</div></div>
+      <div class="sheet-body">
+        <div class="komi-line"><div class="mini-komi"><img src="${ICON.komiHead}"></div><div class="bub2">엄마 ${esc(r.name)} 다 만들었구나! 몇 인분이야? 🍳</div></div>
+        <div style="display:flex;justify-content:center;margin:18px 0">
+          <div style="width:90px;height:90px;background:var(--pink);border:3px solid var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 var(--shadow)"><img src="${asset(r.art+".png")}" style="width:64px;height:64px"></div>
+        </div>
+        <div class="lbl" style="text-align:center">${esc(r.name)} · 몇 인분 만들었어?</div>
+        <div class="field" style="justify-content:center">
+          <div class="stepper">
+            <button data-cn="-1">−</button><span class="val" style="min-width:64px">${c.n}인분</span><button data-cn="1">+</button>
+          </div>
+        </div>
+        <div class="field" style="justify-content:space-between;cursor:pointer" id="deductRow">
+          <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink)"><img src="${ICON.carrot}" style="width:14px;height:14px">쓴 재료 냉장고에서 빼기${usable.length?` (${usable.length}종)`:''}</span>
+          <span style="width:44px;height:24px;border-radius:12px;background:${c.deduct?'var(--green)':'var(--line2)'};position:relative;flex:none;display:inline-block">
+            <span style="position:absolute;top:2px;${c.deduct?'right:2px':'left:2px'};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003"></span>
+          </span>
+        </div>
+      </div>
+      <div class="sheet-foot"><button class="cta green" id="cookConfirm"><img src="${ICON.clockLt}">완성요리에 담기</button></div>
+    </div>`;
+  sheet.querySelectorAll("[data-cn]").forEach(b=>b.onclick=()=>{ c.n=Math.max(1,Math.min(20,c.n+(+b.dataset.cn))); renderCook(); });
+  const dr=$("#deductRow"); if(dr) dr.onclick=()=>{ c.deduct=!c.deduct; renderCook(); };
+  $("#cookConfirm").onclick = finishCook;
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+}
+function finishCook(){
+  const c = cookState, r = c.r;
+  if(c.deduct){
+    const have = invNames();
+    const used = new Set(r.ingredients.filter(x=>have.has(x.n)).map(x=>x.n));
+    S.inv = S.inv.filter(i=> i.loc==='done' || !used.has(i.name));
+  }
+  S.inv.push({id:"d"+Date.now(), name:r.name, qty:`${c.n}인분`, loc:"done", dday:3, art:r.art, cooked:true});
+  save(); closeSheet();
+  S.invTab="done"; S.screen="fridge"; render();
+  toast(`${r.name} 완성! 맛있게 드세요 🍽`);
+}
+
+/* ---------- 완성요리 상세 (먹었어요 / 비우기) ---------- */
+function openDish(id){
+  const it = S.inv.find(i=>i.id===id); if(!it) return;
+  const n = qtyNum(it.qty); const f = freshness(it);
+  const sheet = $("#sheet"); sheet.classList.add("open");
+  sheet.innerHTML = `
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <div class="sheet-head"><button class="back" data-close>‹</button><div class="t">${esc(it.name)}</div></div>
+      <div class="sheet-body">
+        <div style="display:flex;gap:14px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 0 var(--shadow);margin-bottom:16px">
+          <div style="width:64px;height:64px;background:var(--pink);border:2px solid var(--line2);border-radius:12px;display:flex;align-items:center;justify-content:center">${it.art?`<img src="${asset(it.art+".png")}" style="width:48px;height:48px">`:ingIcon(it.name,46)}</div>
+          <div>
+            <div style="font-weight:700;font-size:16px;color:var(--ink);margin-bottom:5px">${esc(it.name)}</div>
+            <div style="font-size:13px;color:var(--ink2)">완성요리 · ${esc(it.qty)} 남음</div>
+            <div style="font-size:11px;color:${f.color};margin-top:4px">● ${f.soon?f.label+' (얼른 먹자!)':'아직 맛있어요'}</div>
+          </div>
+        </div>
+        <div class="komi-line"><div class="mini-komi"><img src="${ICON.komiHead}"></div><div class="bub2">엄마가 만든 거 최고야! 🍽</div></div>
+      </div>
+      <div class="sheet-foot" style="display:flex;gap:10px">
+        <button class="linkbtn danger" id="dishClear" style="flex:1;text-align:center">비우기 🗑</button>
+        <button class="cta green" id="dishEat" style="flex:2"><img src="${ICON.clockLt}">한 그릇 먹었어요</button>
+      </div>
+    </div>`;
+  $("#dishEat").onclick = ()=>{
+    const left = qtyNum(it.qty)-1;
+    if(left<=0){ S.inv=S.inv.filter(x=>x.id!==id); toast("다 먹었어요! 잘 먹었습니다 🍽"); }
+    else { it.qty=`${left}인분`; toast(`냠냠~ ${left}인분 남았어요 🐻`); }
+    save(); closeSheet(); render();
   };
+  $("#dishClear").onclick = ()=>{ S.inv=S.inv.filter(x=>x.id!==id); save(); closeSheet(); render(); toast(`${it.name} 비웠어요`); };
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
 }
 
@@ -1291,13 +1402,14 @@ function bindChatBody(){
 
 /* ====================  GLOBAL EVENT DELEGATION  ==================== */
 document.addEventListener("click", e=>{
-  const t = e.target.closest("[data-nav],[data-add],[data-tab],[data-item],[data-recipe],[data-recroll],[data-pick]");
+  const t = e.target.closest("[data-nav],[data-add],[data-tab],[data-item],[data-dish],[data-recipe],[data-recroll],[data-pick]");
   if(!t) return;
   if(t.hasAttribute("data-nav")){ S.screen=t.dataset.nav; render(); }
   else if(t.hasAttribute("data-add")){ openAdd(); }
   else if(t.hasAttribute("data-recroll")){ recOffset += 3; render(); }
   else if(t.hasAttribute("data-tab")){ S.invTab=t.dataset.tab; render(); }
   else if(t.hasAttribute("data-item")){ openItem(t.dataset.item); }
+  else if(t.hasAttribute("data-dish")){ openDish(t.dataset.dish); }
   else if(t.hasAttribute("data-recipe") && !t.closest("#sheet")){ openRecipe(t.dataset.recipe); }
 });
 
