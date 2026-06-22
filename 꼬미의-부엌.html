@@ -540,13 +540,14 @@ function invCell(it){
 
 /* ---------- CHAT (꼬미 AI) ---------- */
 function viewChat(){
-  const online = !!S.apiKey;
+  const online = CLI || !!S.apiKey;
+  const stTxt = CLI ? '로컬 두뇌 · 상담중' : (online ? '레시피 상담중' : '설정에서 API 키를 넣어줘');
   return `
   <div class="chat-head">
     <div class="av"><img src="${ICON.komiHead}"></div>
     <div style="flex:1">
       <div class="nm">꼬미</div>
-      <div class="st ${online?'':'off'}"><i></i>${online?'레시피 상담중':'설정에서 API 키를 넣어줘'}</div>
+      <div class="st ${online?'':'off'}"><i></i>${stTxt}</div>
     </div>
   </div>
   <div class="msgs" id="msgs">${renderMsgs()}</div>
@@ -596,6 +597,7 @@ function afterChat(){
   const inp = $("#chatInput"), btn = $("#sendBtn");
   if(btn) btn.onclick = ()=>sendChat(inp.value);
   if(inp) inp.onkeydown = e=>{ if(e.key==="Enter") sendChat(inp.value); };
+  bindChatBody(); // 인트로 칩·레시피 카드 이벤트 연결
 }
 
 /* ---------- MY / settings ---------- */
@@ -897,7 +899,7 @@ ${recipes}
 async function sendChat(text){
   text = (text||"").trim();
   if(!text) return;
-  if(!S.apiKey){ toast("MY에서 API 키부터 등록해줘 🔑"); return; }
+  if(!CLI && !S.apiKey){ toast("MY에서 API 키부터 등록해줘 🔑"); return; }
 
   // push user msg + placeholder assistant
   S.chat.push({role:"user", text});
@@ -905,6 +907,9 @@ async function sendChat(text){
   save();
   // re-render chat preserving input cleared
   rerenderChatPartial();
+
+  // 로컬 CLI 두뇌(내 구독)로 처리 — API 키 불필요
+  if(CLI){ return komiViaCLI(aIdx); }
 
   // build message history for API (strip recipe tags from prior assistant msgs is fine)
   const messages = S.chat.slice(0, aIdx).map(m=>({
@@ -969,6 +974,26 @@ async function sendChat(text){
     save(); rerenderChatPartial();
   }
 }
+async function komiViaCLI(aIdx){
+  const conv = S.chat.slice(0,aIdx).map(m=> (m.role==="user"?"사용자: ":"꼬미: ")+(m.text||"")).join("\n");
+  const prompt = conv + "\n\n위 대화에 이어, 꼬미로서 다음 한 마디만 자연스럽게 답해줘. 레시피를 콕 집어 추천할 땐 마지막 줄에 [[recipe:레시피id]] 형식으로 표시해줘.";
+  try{
+    const res = await fetch("api/komi",{
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({ system: komiSystemPrompt(), prompt })
+    });
+    if(!res.ok){ let m=""; try{ m=(await res.json()).error||""; }catch(e){} throw new Error(m || ("오류 "+res.status)); }
+    const j = await res.json();
+    const raw = j.text || "";
+    const tag = raw.match(/\[\[recipe:([a-z_]+)\]\]/);
+    S.chat[aIdx].text = stripTag(raw).trim() || "음… 뭐가 좋을까? 🐻";
+    if(tag && RECIPES.some(r=>r.id===tag[1])) S.chat[aIdx].recipeId = tag[1];
+    save(); rerenderChatPartial();
+  }catch(err){
+    S.chat[aIdx].text = "앗, 로컬 꼬미 연결에 문제가 생겼어 🐻\n"+(err.message||"맥에서 server.py가 켜져 있는지 확인해줘.");
+    save(); rerenderChatPartial();
+  }
+}
 function stripTag(s){ return s.replace(/\[\[recipe:[a-z_]+\]\]/g,"").trim(); }
 
 function rerenderChatPartial(){
@@ -1002,7 +1027,11 @@ document.addEventListener("click", e=>{
   else if(t.hasAttribute("data-recipe") && !t.closest("#sheet")){ openRecipe(t.dataset.recipe); }
 });
 
-/* ====================  BOOT  ==================== */
+/* ============  CLI(로컬) 두뇌 자동 감지 + BOOT  ============ */
+let CLI = false;
+fetch("api/health").then(r=>r.ok?r.json():null).then(j=>{
+  if(j && j.mode==="cli"){ CLI = true; if(S.screen==="chat") render(); }
+}).catch(()=>{});
 render();
 </script>
 </body>
