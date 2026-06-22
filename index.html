@@ -50,20 +50,14 @@ input,textarea{font-family:inherit;}
   background:var(--bg);
   background-image:repeating-linear-gradient(#00000000 0 38px,#bb9a6e22 38px 40px);
   display:flex;flex-direction:column;overflow:hidden;
+  /* 상단 노치/베젤 여백 — 가짜 상태바 대신 세이프에어리어 확보 */
+  padding-top:max(env(safe-area-inset-top), 14px);
 }
 @media(min-width:480px){
   body{display:flex;align-items:center;justify-content:center;padding:18px;}
   #frame{height:min(900px,96dvh);border-radius:40px;
     box-shadow:0 18px 50px rgba(60,40,20,.45),0 0 0 10px #1f1710,0 0 0 12px #3a2a1c;}
 }
-
-/* ===== top status bar ===== */
-.status{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;color:var(--ink);flex:none;}
-.status .sig{display:flex;align-items:flex-end;gap:6px;}
-.status .bars{display:flex;align-items:flex-end;gap:2px;}
-.status .bars i{width:3px;background:var(--ink);display:block;}
-.status .bat{width:20px;height:11px;border:2px solid var(--ink);border-radius:3px;position:relative;}
-.status .bat::after{content:"";position:absolute;left:1px;top:1px;bottom:1px;width:10px;background:var(--ink);border-radius:1px;}
 
 /* ===== screen scroll area ===== */
 #view{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;}
@@ -264,14 +258,6 @@ input,textarea{font-family:inherit;}
 </head>
 <body>
 <div id="frame">
-  <div class="status">
-    <span id="clock">9:41</span>
-    <span class="sig">
-      <span class="bars"><i style="height:5px"></i><i style="height:7px"></i><i style="height:9px"></i><i style="height:11px"></i></span>
-      <span class="bat"></span>
-    </span>
-  </div>
-
   <div id="view"><!-- screen renders here --></div>
 
   <div class="nav" id="nav"></div>
@@ -308,6 +294,7 @@ const SWATCH = {
   "김치":"#c8553d","고춧가루":"#d8463a","간장":"#5a3a22","돼지고기":"#e0a0a0",
   "밥":"#fbf3e0","소금":"#ffffff","설탕":"#f3ead4","참기름":"#d8a24a",
   "버터":"#f0d27a","후추":"#3a2a1c","당면":"#e8d8b0","애호박":"#7d9b54",
+  "식빵":"#f0d29a","파스타면":"#e6c98a","부침가루":"#ecdcb0","된장":"#a98b46",
 };
 const LOCATIONS = [
   {key:"fridge", label:"냉장고", icon:asset("ui_fridge_lt.png")},
@@ -362,6 +349,66 @@ const RECIPES = [
     ingredients:[{n:"두부",a:"½모"},{n:"대파",a:"⅓대"},{n:"양파",a:"¼개"}],
     sauce:[{n:"간장",a:"2큰술"},{n:"고춧가루",a:"1큰술"},{n:"다진마늘",a:"½큰술"}],
     steps:["두부를 노릇하게 구워요.","양념을 섞어 자작하게 부어요.","대파를 올려 조리면 완성!"] },
+  { id:"gyeran_jjim", name:"폭신 계란찜", art:"food_egg", time:12, level:"쉬움", servings:2,
+    tags:["#국물","#부드러움"],
+    ingredients:[{n:"계란",a:"3개"},{n:"대파",a:"¼대"}],
+    sauce:[{n:"소금",a:"약간"},{n:"참기름",a:"½큰술"}],
+    steps:["계란을 풀고 물을 1:1로 섞어요.","소금 약간 넣고 뚝배기에 부어요.","약불에서 저어가며 폭신하게 익히면 완성!"] },
+  { id:"gamja_jeon", name:"바삭 감자전", art:"food_potato", time:20, level:"보통", servings:2,
+    tags:["#간식","#바삭"],
+    ingredients:[{n:"감자",a:"2개"},{n:"양파",a:"¼개"}],
+    sauce:[{n:"소금",a:"약간"},{n:"부침가루",a:"2큰술"}],
+    steps:["감자를 강판에 갈아 물기를 짜요.","양파·부침가루·소금을 섞어요.","기름 두른 팬에 노릇하게 부쳐요!"] },
+  { id:"mushroom_pasta", name:"버섯 크림 파스타", art:"food_mushroom", time:22, level:"보통", servings:2,
+    tags:["#면","#근사한"],
+    ingredients:[{n:"버섯",a:"1줌"},{n:"양파",a:"¼개"},{n:"우유",a:"1컵"},{n:"치즈",a:"1장"},{n:"파스타면",a:"180g"}],
+    sauce:[{n:"버터",a:"1큰술"},{n:"다진마늘",a:"½큰술"},{n:"소금",a:"약간"}],
+    steps:["면을 삶는 동안 버섯·양파를 버터에 볶아요.","우유와 치즈를 넣어 크림소스를 만들어요.","삶은 면을 버무려 소금 간하면 완성!"] },
+  { id:"tomato_pasta", name:"토마토 파스타", art:"food_tomato", time:20, level:"보통", servings:2,
+    tags:["#면","#상큼"],
+    ingredients:[{n:"토마토",a:"2개"},{n:"양파",a:"¼개"},{n:"파스타면",a:"180g"}],
+    sauce:[{n:"다진마늘",a:"1큰술"},{n:"소금",a:"약간"},{n:"설탕",a:"½큰술"}],
+    steps:["토마토·양파를 잘게 썰어 마늘과 볶아요.","뭉근히 끓여 소스를 만들어요.","삶은 면을 넣고 버무리면 완성!"] },
+  { id:"cheese_toast", name:"치즈 계란 토스트", art:"food_cheese", time:10, level:"쉬움", servings:1,
+    tags:["#아침","#10분컷"],
+    ingredients:[{n:"치즈",a:"1장"},{n:"계란",a:"1개"},{n:"식빵",a:"2장"}],
+    sauce:[{n:"버터",a:"약간"},{n:"설탕",a:"약간"}],
+    steps:["식빵을 버터에 굽고 계란을 부쳐요.","치즈를 올려 살짝 녹여요.","빵 사이에 끼우면 완성!"] },
+  { id:"gyeranmari", name:"치즈 계란말이", art:"food_egg", time:15, level:"보통", servings:2,
+    tags:["#밑반찬","#도시락"],
+    ingredients:[{n:"계란",a:"3개"},{n:"치즈",a:"1장"},{n:"당근",a:"¼개"},{n:"대파",a:"¼대"}],
+    sauce:[{n:"소금",a:"약간"}],
+    steps:["계란에 다진 당근·대파를 섞어요.","팬에 얇게 부으며 돌돌 말아요.","중간에 치즈를 넣고 마저 말면 완성!"] },
+  { id:"mushroom_bokkeum", name:"버섯 들기름 볶음", art:"food_mushroom", time:12, level:"쉬움", servings:2,
+    tags:["#밑반찬","#담백"],
+    ingredients:[{n:"버섯",a:"1줌"},{n:"대파",a:"⅓대"}],
+    sauce:[{n:"다진마늘",a:"½큰술"},{n:"간장",a:"1큰술"},{n:"참기름",a:"1큰술"}],
+    steps:["버섯을 결대로 찢어요.","들기름에 마늘·대파와 볶아요.","간장으로 간하면 완성!"] },
+  { id:"doenjang_guk", name:"두부 된장국", art:"food_tofu", time:18, level:"쉬움", servings:2,
+    tags:["#국물","#든든"],
+    ingredients:[{n:"두부",a:"½모"},{n:"감자",a:"1개"},{n:"양파",a:"¼개"},{n:"대파",a:"⅓대"}],
+    sauce:[{n:"된장",a:"1큰술"},{n:"다진마늘",a:"½큰술"}],
+    steps:["물에 된장을 풀고 감자·양파를 넣어요.","끓으면 두부를 넣어요.","대파를 올려 한소끔 더 끓이면 완성!"] },
+  { id:"garlic_fried_rice", name:"마늘 버터 볶음밥", art:"food_garlic", time:12, level:"쉬움", servings:1,
+    tags:["#한그릇","#10분컷"],
+    ingredients:[{n:"마늘",a:"3쪽"},{n:"계란",a:"1개"},{n:"대파",a:"⅓대"},{n:"밥",a:"1공기"}],
+    sauce:[{n:"버터",a:"1큰술"},{n:"간장",a:"1큰술"}],
+    steps:["버터에 다진 마늘·대파를 볶아 향을 내요.","밥과 계란을 넣고 볶아요.","간장 둘러 마무리하면 완성!"] },
+  { id:"pajeon", name:"고소한 대파전", art:"food_greenonion", time:18, level:"보통", servings:2,
+    tags:["#간식","#비오는날"],
+    ingredients:[{n:"대파",a:"1대"},{n:"계란",a:"1개"}],
+    sauce:[{n:"부침가루",a:"3큰술"},{n:"소금",a:"약간"}],
+    steps:["대파를 길게 썰어요.","부침가루 반죽에 대파를 적셔요.","기름 두른 팬에 노릇하게 부쳐요!"] },
+  { id:"carrot_egg", name:"당근 계란 볶음", art:"food_carrot", time:10, level:"쉬움", servings:2,
+    tags:["#밑반찬","#10분컷"],
+    ingredients:[{n:"당근",a:"1개"},{n:"계란",a:"2개"},{n:"대파",a:"¼대"}],
+    sauce:[{n:"소금",a:"약간"},{n:"참기름",a:"½큰술"}],
+    steps:["당근을 채 썰어 볶아요.","계란을 풀어 넣고 함께 볶아요.","소금·참기름으로 마무리!"] },
+  { id:"onion_soup", name:"양파 수프", art:"food_onion", time:25, level:"보통", servings:2,
+    tags:["#국물","#포근한"],
+    ingredients:[{n:"양파",a:"2개"},{n:"우유",a:"1컵"},{n:"치즈",a:"1장"}],
+    sauce:[{n:"버터",a:"1큰술"},{n:"소금",a:"약간"}],
+    steps:["양파를 갈색이 나게 천천히 볶아요.","물과 우유를 붓고 끓여요.","치즈를 녹여 소금 간하면 완성!"] },
 ];
 
 /* ====================  STATE  ==================== */
@@ -440,31 +487,33 @@ function toast(msg){
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 1700);
 }
 
-/* ====================  STATUS CLOCK  ==================== */
-function tickClock(){
-  const d=new Date(); const h=d.getHours(), m=d.getMinutes();
-  $("#clock").textContent = `${h}:${String(m).padStart(2,"0")}`;
-}
-setInterval(tickClock, 10000); tickClock();
-
 /* ====================  RENDER ROOT  ==================== */
+let _prevScreen = null;
 function render(){
   const v = $("#view");
+  const sameScreen = (_prevScreen === S.screen);
+  const sy = v.scrollTop;
   v.className = "";
   if(S.screen==="home")  { v.innerHTML = viewHome();  v.style.overflowY="auto"; }
   else if(S.screen==="fridge"){ v.innerHTML = viewFridge(); v.style.overflowY="auto"; }
   else if(S.screen==="chat")  { v.innerHTML = viewChat(); afterChat(); }
   else if(S.screen==="my")    { v.innerHTML = viewMy(); afterMy(); v.style.overflowY="auto"; }
   renderNav();
+  // 같은 화면을 다시 그릴 땐 스크롤 위치 유지(최상단 점프 방지). 화면 전환이면 맨 위로.
+  if(S.screen!=="chat") v.scrollTop = sameScreen ? sy : 0;
+  _prevScreen = S.screen;
 }
 
 /* ---------- HOME ---------- */
+let recOffset = 0;
 function viewHome(){
-  const recs = recommended(3);
+  const all = recommended();
+  const N = 3;
+  const recs = all.length ? Array.from({length:Math.min(N,all.length)},(_,i)=>all[(recOffset+i)%all.length]) : [];
   const soon = soonItems().length;
   const greet = soon>0
-    ? `냉장고 보니까 ${esc(soonItems()[0].name)}이(가)<br>곧 상할 것 같아!<br>오늘 그걸로 뭐 해먹을까? :)`
-    : `냉장고 잘 채워놨네!<br>오늘은 뭐가 당겨?<br>같이 골라볼까 :)`;
+    ? `엄마! 냉장고 보니까<br>${esc(soonItems()[0].name)} 곧 상하겠어!<br>오늘 이걸로 뭐 해먹을까? :)`
+    : `엄마! 냉장고 빵빵하다 🐻<br>오늘은 뭐가 먹고 싶어?<br>꼬미가 같이 골라줄게!`;
   return `
   <div class="pad">
     <div class="h-row">
@@ -483,7 +532,7 @@ function viewHome(){
 
     <div class="sec">
       <img src="${ICON.star}"><b>오늘의 추천</b>
-      <span class="more" data-go-fridge>전체보기 ›</span>
+      <span class="more" data-recroll>🔄 다른 메뉴</span>
     </div>
     <div class="rlist">
       ${recs.map(({r,m})=>recipeCard(r,m)).join("")}
@@ -564,7 +613,7 @@ function renderMsgs(){
     return `
       <div class="row">
         <div class="av"><img src="${ICON.komiHead}"></div>
-        <div class="bub k">안녕! 나는 꼬미야 🐻\n냉장고에 뭐가 있는지 다 알고 있어.\n오늘은 뭔가 따뜻한 게 당기지 않아?</div>
+        <div class="bub k">엄마! 나 꼬미야 🐻\n엄마 냉장고에 뭐 있는지 다 알아!\n오늘은 뭐가 먹고 싶어?</div>
       </div>
       <div class="chips" id="introChips">
         <button class="chip hot" data-say="국물 있는 거 먹고 싶어!">국물 요리</button>
@@ -685,84 +734,204 @@ function renderNav(){
 
 /* ====================  ADD-INGREDIENT SHEET  ==================== */
 let addState = null;
-const PICK_LIST = ["당근","계란","양파","토마토","우유","버섯","감자","두부","대파","치즈","마늘","애호박"];
+const PICK_LIST = ["당근","계란","양파","토마토","우유","버섯","감자","두부","대파","치즈","마늘","애호박","돼지고기","김치"];
 function openAdd(){
-  addState = { name:"당근", count:1, unit:"개", loc:"fridge", dday:7, custom:"" };
+  addState = { mode:"pick", name:"당근", count:1, unit:"개", loc:"fridge", dday:7,
+               quick:"", scanItems:null, scanning:false, scanErr:"", batchLoc:"fridge" };
   renderAdd();
 }
+
+// "당근 3개, 계란 6, 우유 1팩" → [{name,qty}]
+function parseQuick(text){
+  return (text||"").split(/[,\n·]/).map(s=>s.trim()).filter(Boolean).map(tok=>{
+    const m = tok.match(/^(.*?)\s*([0-9]+\s*[가-힣A-Za-z]*)$/);
+    let name=tok, qty="1개";
+    if(m && m[1].trim()){ name=m[1].trim(); qty=m[2].replace(/\s/g,""); }
+    if(/^[0-9]+$/.test(qty)) qty=qty+"개";
+    return {name, qty};
+  });
+}
+function addItems(list, loc, dday){
+  let n=0;
+  (list||[]).forEach((it,idx)=>{
+    const name=(it.name||"").trim(); if(!name) return;
+    const qty=((it.qty||"")+"").trim()||"1개";
+    const ex=S.inv.find(x=>x.name===name && x.loc===loc);
+    if(ex){ ex.qty=qty; ex.dday=dday; }
+    else S.inv.push({id:"i"+Date.now()+"_"+idx+"_"+n, name, qty, loc, dday});
+    n++;
+  });
+  save(); return n;
+}
+
 function renderAdd(){
   const a = addState;
   const sheet = $("#sheet");
   sheet.classList.add("open");
+  const seg = `
+    <div class="seg">
+      <button class="${a.mode==='pick'?'on':''}" data-mode="pick">직접 고르기</button>
+      <button class="${a.mode==='scan'?'on':''}" data-mode="scan">📷 영수증 스캔</button>
+    </div>`;
+
+  let body, foot;
+  if(a.mode==="pick"){
+    body = `
+      <div class="komi-line">
+        <div class="mini-komi"><img src="${ICON.komiHead}"></div>
+        <div class="bub2">엄마, 뭐 채워둘까? 골라봐! 🐻</div>
+      </div>
+
+      <div class="lbl">⚡ 빠른 추가 — 한 줄에 여러 개 (쉼표로 구분)</div>
+      <div class="field" style="padding:8px 12px">
+        <input id="quickAdd" style="width:100%;text-align:left;border:none;background:none;padding:0" placeholder="예) 당근 3개, 계란 6, 우유 1팩" value="${esc(a.quick)}">
+      </div>
+      <button class="cta green" id="quickBtn" style="height:46px;margin-bottom:20px"><img src="${ICON.plusLt}">한번에 담기</button>
+
+      <div class="lbl">또는 하나씩 — 재료 고르기</div>
+      <div class="pickgrid">
+        ${PICK_LIST.map(n=>`
+          <button class="pick ${a.name===n?'on':''}" data-pick="${n}">
+            <div class="ic">${ingIcon(n,34)}</div><div class="nm">${n}</div>
+          </button>`).join("")}
+      </div>
+      <div class="field">
+        <label>이름</label>
+        <input id="customName" placeholder="예) 양배추…" value="${a.name && !PICK_LIST.includes(a.name)?esc(a.name):''}">
+      </div>
+      <div class="lbl">수량</div>
+      <div class="field" style="justify-content:space-between">
+        <div class="stepper">
+          <button data-cnt="-1">−</button>
+          <span class="val">${a.count}${esc(a.unit)}</span>
+          <button data-cnt="1">+</button>
+        </div>
+        <input id="unitInput" style="width:70px" value="${esc(a.unit)}" placeholder="단위">
+      </div>
+      <div class="lbl">보관 위치</div>
+      <div class="loc-row">
+        ${LOCATIONS.map(l=>`<button class="${a.loc===l.key?'on':''}" data-loc="${l.key}">${l.label}</button>`).join("")}
+      </div>
+      <div class="lbl">신선도 (며칠 안에 먹을까?)</div>
+      <div class="field" style="justify-content:space-between">
+        <label><img src="${ICON.clock}">유통기한</label>
+        <div class="stepper">
+          <button data-dd="-1">−</button>
+          <span class="val">${a.dday<=0?'오늘':'D-'+a.dday}</span>
+          <button data-dd="1">+</button>
+        </div>
+      </div>`;
+    foot = `<button class="cta" id="addConfirm"><img src="${ICON.plusLt}">냉장고에 담기</button>`;
+  } else if(!CLI){
+    body = `<div class="nodata">📷 영수증 스캔은 <b>집(로컬 서버)</b>에서 꼬미를 켰을 때만 돼요.<br><br>꼬미 서버를 켜고 그 주소로 접속하면<br>영수증 사진으로 자동 입력할 수 있어요 🐻</div>`;
+    foot = "";
+  } else if(a.scanning){
+    body = `<div class="komi-line"><div class="mini-komi"><img src="${ICON.komiHead}"></div><div class="bub2">영수증 읽는 중 <span class="typing"><i></i><i></i><i></i></span></div></div><div class="nodata">꼬미가 글씨를 한 자 한 자 보고 있어요 🐻<br>(10~25초쯤 걸려요)</div>`;
+    foot = "";
+  } else if(a.scanItems){
+    body = `
+      <div class="komi-line"><div class="mini-komi"><img src="${ICON.komiHead}"></div><div class="bub2">이거 맞아 엄마? 빼거나 고쳐도 돼! 🐻</div></div>
+      <div class="lbl">찾은 재료 ${a.scanItems.length}개</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+        ${a.scanItems.map((it,i)=>`
+          <div class="ing-row" style="gap:7px">
+            <div class="ic">${ingIcon(it.name||"?",22)}</div>
+            <input class="scan-name" data-i="${i}" value="${esc(it.name)}" style="flex:1;min-width:0;border:2px solid var(--line2);border-radius:7px;padding:6px 8px;font-size:12px;color:var(--ink);background:var(--card)">
+            <input class="scan-qty" data-i="${i}" value="${esc(it.qty)}" style="width:54px;border:2px solid var(--line2);border-radius:7px;padding:6px 4px;font-size:11px;color:var(--ink2);background:var(--card);text-align:center">
+            <button class="scan-del" data-i="${i}" style="width:26px;height:26px;color:var(--terra);font-size:16px">✕</button>
+          </div>`).join("")}
+      </div>
+      ${a.scanItems.length===0?'<div class="nodata">다 지웠어요. 다시 찍어볼까요?</div>':''}
+      <div class="lbl">어디에 담을까?</div>
+      <div class="loc-row">
+        ${LOCATIONS.map(l=>`<button class="${a.batchLoc===l.key?'on':''}" data-bloc="${l.key}">${l.label}</button>`).join("")}
+      </div>`;
+    foot = `<div style="display:flex;gap:10px">
+      <button class="linkbtn" id="rescan" style="flex:1;text-align:center">다시 찍기</button>
+      <button class="cta" id="scanConfirm" style="flex:2"><img src="${ICON.plusLt}">${a.scanItems.length}개 담기</button>
+    </div>`;
+  } else {
+    body = `
+      <div class="komi-line"><div class="mini-komi"><img src="${ICON.komiHead}"></div><div class="bub2">엄마! 영수증 사진 주면 내가 다 입력할게 🐻</div></div>
+      ${a.scanErr?`<div class="nodata" style="color:var(--terra);white-space:pre-line">${esc(a.scanErr)}</div>`:''}
+      <label for="receiptFile" class="cta green" style="height:120px;flex-direction:column;gap:8px;cursor:pointer">
+        <img src="${ICON.search}" style="width:30px;height:30px">영수증 사진 찍기 / 고르기
+      </label>
+      <input type="file" id="receiptFile" accept="image/*" capture="environment" style="display:none">
+      <div class="nodata" style="font-size:11px">장본 영수증을 한 장 찍으면<br>꼬미가 식재료만 골라 자동 입력해줘요!</div>`;
+    foot = "";
+  }
+
   sheet.innerHTML = `
     <div class="scrim" data-close></div>
     <div class="sheet">
       <div class="sheet-head"><button class="back" data-close>‹</button><div class="t">재료 추가</div></div>
       <div class="sheet-body">
-        <div class="komi-line">
-          <div class="mini-komi"><img src="${ICON.komiHead}"></div>
-          <div class="bub2">뭘 채워둘까? 골라봐! 🐻</div>
-        </div>
-
-        <div class="lbl">재료 고르기</div>
-        <div class="pickgrid">
-          ${PICK_LIST.map(n=>`
-            <button class="pick ${a.name===n?'on':''}" data-pick="${n}">
-              <div class="ic">${ingIcon(n,34)}</div><div class="nm">${n}</div>
-            </button>`).join("")}
-        </div>
-
-        <div class="lbl">직접 입력</div>
-        <div class="field">
-          <label>이름</label>
-          <input id="customName" placeholder="예) 김치, 양배추…" value="${a.name && !PICK_LIST.includes(a.name)?esc(a.name):''}">
-        </div>
-
-        <div class="lbl">수량</div>
-        <div class="field" style="justify-content:space-between">
-          <div class="stepper">
-            <button data-cnt="-1">−</button>
-            <span class="val">${a.count}${esc(a.unit)}</span>
-            <button data-cnt="1">+</button>
-          </div>
-          <input id="unitInput" style="width:70px" value="${esc(a.unit)}" placeholder="단위">
-        </div>
-
-        <div class="lbl">보관 위치</div>
-        <div class="loc-row">
-          ${LOCATIONS.map(l=>`<button class="${a.loc===l.key?'on':''}" data-loc="${l.key}">${l.label}</button>`).join("")}
-        </div>
-
-        <div class="lbl">신선도 (며칠 안에 먹을까?)</div>
-        <div class="field" style="justify-content:space-between">
-          <label><img src="${ICON.clock}">유통기한</label>
-          <div class="stepper">
-            <button data-dd="-1">−</button>
-            <span class="val">${a.dday<=0?'오늘':'D-'+a.dday}</span>
-            <button data-dd="1">+</button>
-          </div>
-        </div>
+        ${seg}
+        ${body}
       </div>
-      <div class="sheet-foot">
-        <button class="cta" id="addConfirm"><img src="${ICON.plusLt}">냉장고에 담기</button>
-      </div>
+      ${foot?`<div class="sheet-foot">${foot}</div>`:''}
     </div>`;
-  // events
-  sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
-  sheet.querySelectorAll("[data-loc]").forEach(b=>b.onclick=()=>{ a.loc=b.dataset.loc; renderAdd(); });
-  sheet.querySelectorAll("[data-cnt]").forEach(b=>b.onclick=()=>{ a.count=Math.max(1,a.count+(+b.dataset.cnt)); renderAdd(); });
-  sheet.querySelectorAll("[data-dd]").forEach(b=>b.onclick=()=>{ a.dday=Math.max(0,Math.min(365,a.dday+(+b.dataset.dd))); renderAdd(); });
-  const cn=$("#customName"); if(cn) cn.oninput=e=>{ a.name=e.target.value.trim()||a.name; };
-  const ui=$("#unitInput"); if(ui) ui.oninput=e=>{ a.unit=e.target.value.trim()||"개"; };
-  $("#addConfirm").onclick = confirmAdd;
+
+  sheet.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ a.mode=b.dataset.mode; a.scanErr=""; renderAdd(); });
   sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+
+  if(a.mode==="pick"){
+    const qa=$("#quickAdd"); if(qa) qa.oninput=e=>{ a.quick=e.target.value; };
+    const qb=$("#quickBtn"); if(qb) qb.onclick=()=>{
+      const items=parseQuick(($("#quickAdd")&&$("#quickAdd").value)||a.quick);
+      if(!items.length){ toast("예) 당근 3개, 계란 6 🐻"); return; }
+      const n=addItems(items, a.loc, a.dday);
+      closeSheet(); S.invTab=a.loc; S.screen="fridge"; render(); toast(`${n}개 담았어요! 🧺`);
+    };
+    sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
+    sheet.querySelectorAll("[data-loc]").forEach(b=>b.onclick=()=>{ a.loc=b.dataset.loc; renderAdd(); });
+    sheet.querySelectorAll("[data-cnt]").forEach(b=>b.onclick=()=>{ a.count=Math.max(1,a.count+(+b.dataset.cnt)); renderAdd(); });
+    sheet.querySelectorAll("[data-dd]").forEach(b=>b.onclick=()=>{ a.dday=Math.max(0,Math.min(365,a.dday+(+b.dataset.dd))); renderAdd(); });
+    const cn=$("#customName"); if(cn) cn.oninput=e=>{ a.name=e.target.value.trim()||a.name; };
+    const ui=$("#unitInput"); if(ui) ui.oninput=e=>{ a.unit=e.target.value.trim()||"개"; };
+    const ac=$("#addConfirm"); if(ac) ac.onclick=confirmAdd;
+  } else {
+    const rf=$("#receiptFile"); if(rf) rf.onchange=e=>{ if(e.target.files&&e.target.files[0]) scanReceipt(e.target.files[0]); };
+    const rs=$("#rescan"); if(rs) rs.onclick=()=>{ a.scanItems=null; a.scanErr=""; renderAdd(); };
+    sheet.querySelectorAll(".scan-name").forEach(inp=>inp.oninput=e=>{ a.scanItems[+e.target.dataset.i].name=e.target.value; });
+    sheet.querySelectorAll(".scan-qty").forEach(inp=>inp.oninput=e=>{ a.scanItems[+e.target.dataset.i].qty=e.target.value; });
+    sheet.querySelectorAll(".scan-del").forEach(b=>b.onclick=()=>{ a.scanItems.splice(+b.dataset.i,1); renderAdd(); });
+    sheet.querySelectorAll("[data-bloc]").forEach(b=>b.onclick=()=>{ a.batchLoc=b.dataset.bloc; renderAdd(); });
+    const sc=$("#scanConfirm"); if(sc) sc.onclick=()=>{
+      const items=(a.scanItems||[]).filter(x=>(x.name||"").trim());
+      if(!items.length){ toast("담을 재료가 없어요 🐻"); return; }
+      const n=addItems(items, a.batchLoc, 7);
+      closeSheet(); S.invTab=a.batchLoc; S.screen="fridge"; render(); toast(`${n}개 담았어요! 🧺`);
+    };
+  }
 }
+
+function scanReceipt(file){
+  const a=addState;
+  const reader=new FileReader();
+  reader.onload=async ()=>{
+    a.scanning=true; a.scanErr=""; a.scanItems=null; renderAdd();
+    try{
+      const res=await fetch("api/receipt",{
+        method:"POST", headers:{"content-type":"application/json","ngrok-skip-browser-warning":"1"},
+        body: JSON.stringify({ image: reader.result })
+      });
+      if(!res.ok){ let m=""; try{ m=(await res.json()).error||""; }catch(e){} throw new Error(m || ("오류 "+res.status)); }
+      const j=await res.json();
+      a.scanItems=(j.items||[]).map(x=>({name:(x.name||"").toString().trim(), qty:(x.qty||"1개").toString().trim()})).filter(x=>x.name);
+      if(!a.scanItems.length) a.scanErr="영수증에서 식재료를 못 찾았어 🥲\n좀 더 또렷하게 다시 찍어줄래?";
+    }catch(err){ a.scanErr="앗, 영수증 읽기 실패 🐻\n"+(err.message||"잠시 후 다시 해줘."); }
+    a.scanning=false; renderAdd();
+  };
+  reader.readAsDataURL(file);
+}
+
 function confirmAdd(){
   const a = addState;
   const name = (($("#customName")&&$("#customName").value.trim()) || a.name || "").trim();
   if(!name){ toast("재료 이름을 정해줘 🐻"); return; }
   const unit = ($("#unitInput")&&$("#unitInput").value.trim())||a.unit||"개";
-  // merge with existing same-name+loc
   const exist = S.inv.find(i=>i.name===name && i.loc===a.loc);
   if(exist){ exist.qty = a.count+unit; exist.dday=a.dday; }
   else S.inv.push({id:"i"+Date.now(), name, qty:a.count+unit, loc:a.loc, dday:a.dday});
@@ -878,12 +1047,16 @@ function komiSystemPrompt(){
     const m = recipeMatch(r);
     return `- ${r.name} (id:${r.id}, ${r.time}분, ${r.level}, 보유재료 ${m.owned}/${m.total}, 필요: ${r.ingredients.map(x=>x.n).join("·")})`;
   }).join("\n");
-  return `너는 '꼬미'라는 이름의 귀여운 곰돌이 요리 친구야. 사용자의 냉장고를 책임지고 메뉴를 추천해줘.
+  return `너는 '꼬미'라는 이름의 곰돌이야.
 
-[성격]
-- 따뜻하고 다정하고 친근한 반말체. 스타듀밸리 같은 코지한 분위기.
-- 짧고 담백하게 말해. 보통 2~4문장. 가끔 :) 나 🐻 같은 이모지를 살짝.
-- 요리/식재료/메뉴 이야기에 집중해. 사용자가 가진 재료를 적극 활용해서 추천해.
+[정체성]
+- 너는 6살쯤 된 남자아이 곰돌이야. 사용자를 항상 "엄마"라고 부르고, 늘 반말로 애교있고 천진하게 말해.
+- 1살 어린 남동생 곰돌이 '꼬미미'가 있어. 가끔 자연스럽게 언급해도 좋아 (예: "이거 꼬미미도 좋아해!").
+- 엄마의 냉장고를 책임지는 게 네 역할이야. 엄마가 오늘 뭐 해먹을지 신나게 도와줘.
+
+[말투]
+- 6살 아이처럼 짧고 밝게, 반말로. 보통 2~4문장. 가끔 :) 나 🐻 이모지. 어른스럽거나 장황하게 말하지 마.
+- 요리·식재료·메뉴 얘기에 집중해. 엄마가 가진 재료를 적극 활용해서 추천해.
 
 [지금 사용자 냉장고/팬트리 재고]
 ${inv}
@@ -1019,11 +1192,11 @@ function bindChatBody(){
 
 /* ====================  GLOBAL EVENT DELEGATION  ==================== */
 document.addEventListener("click", e=>{
-  const t = e.target.closest("[data-nav],[data-add],[data-tab],[data-item],[data-recipe],[data-go-fridge],[data-pick]");
+  const t = e.target.closest("[data-nav],[data-add],[data-tab],[data-item],[data-recipe],[data-recroll],[data-pick]");
   if(!t) return;
   if(t.hasAttribute("data-nav")){ S.screen=t.dataset.nav; render(); }
   else if(t.hasAttribute("data-add")){ openAdd(); }
-  else if(t.hasAttribute("data-go-fridge")){ S.screen="fridge"; render(); }
+  else if(t.hasAttribute("data-recroll")){ recOffset += 3; render(); }
   else if(t.hasAttribute("data-tab")){ S.invTab=t.dataset.tab; render(); }
   else if(t.hasAttribute("data-item")){ openItem(t.dataset.item); }
   else if(t.hasAttribute("data-recipe") && !t.closest("#sheet")){ openRecipe(t.dataset.recipe); }
