@@ -40,6 +40,11 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=ROOT, **kw)
 
+    def end_headers(self):
+        # 캐시를 끄고 항상 재검증 → 파일만 바꾸면 폰 새로고침 시 바로 최신 버전.
+        self.send_header("Cache-Control", "no-cache, must-revalidate")
+        super().end_headers()
+
     def _json(self, code, obj):
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(code)
