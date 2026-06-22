@@ -127,6 +127,9 @@ input,textarea{font-family:inherit;}
 .chat-head .st{font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;}
 .chat-head .st i{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;}
 .chat-head .st.off{color:var(--ink2);} .chat-head .st.off i{background:var(--line2);}
+.who-tabs{display:flex;gap:3px;background:var(--card);border:2px solid var(--line2);border-radius:10px;padding:3px;flex:none;}
+.who-tabs button{font-size:11px;color:var(--ink2);padding:5px 8px;border-radius:7px;white-space:nowrap;}
+.who-tabs button.on{background:var(--line);color:#fbe7c8;}
 .msgs{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
 .row{display:flex;gap:8px;align-items:flex-end;}
 .row.me{justify-content:flex-end;}
@@ -282,6 +285,7 @@ const ICON = {
   flame:asset("ui_flame.png"), fridge:asset("ui_fridge.png"), snow:asset("ui_snow.png"),
   jar:asset("ui_jar.png"), sauce:asset("ui_sauce.png"), search:asset("ui_search.png"),
   komiHead:asset("komi_head.png"), komiRelax:asset("komi_relax.png"), komiFront:asset("komi_front.png"),
+  komimiHead:asset("komimi_head.png"), komimiRelax:asset("komimi_relax.png"),
 };
 // ingredients that have dedicated pixel art
 const FOOD_ART = {
@@ -444,14 +448,17 @@ function load(){
 function defaultState(){
   return {
     inv: DEFAULT_INV.map((x,i)=>({id:"i"+i+"_"+Date.now(),...x})),
-    chat: [],
+    chat: [],          // 꼬미(집밥) 대화
+    chatMimi: [],      // 꼬미미(배달) 대화
+    chatWho: "komi",   // 'komi' | 'komimi'
     apiKey: "",
     model: "claude-haiku-4-5",
     screen: "home",
     invTab: "fridge",
   };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify({inv:S.inv,chat:S.chat,apiKey:S.apiKey,model:S.model})); }
+function save(){ localStorage.setItem(KEY, JSON.stringify({inv:S.inv,chat:S.chat,chatMimi:S.chatMimi,apiKey:S.apiKey,model:S.model})); }
+function curChat(){ return S.chatWho==='komimi' ? S.chatMimi : S.chat; }
 
 /* ====================  HELPERS  ==================== */
 const $ = (s,el=document)=>el.querySelector(s);
@@ -463,22 +470,33 @@ function freshness(it){ // returns {dot, label, color}
   return {color:"var(--green)", label:"신선", soon:false};
 }
 function soonItems(){ return S.inv.filter(i=>i.dday<=2); }
+function qtyNum(q){ const m=(""+(q||"")).match(/\d+/); return m?+m[0]:1; }
+// 재고가 많은 재료(양념장 제외, 5개 이상) — 과잉재고 소진 추천에 사용
+function overItems(){ return S.inv.filter(i=>i.loc!=='sauce' && qtyNum(i.qty)>=5); }
 
-// how many of a recipe's ingredients you own (sauces count loosely)
+// how many of a recipe's ingredients you own + 임박/과잉 신호
 function recipeMatch(r){
   const have = invNames();
+  const ddayByName = {}; S.inv.forEach(i=>{ if(!(i.name in ddayByName)||i.dday<ddayByName[i.name]) ddayByName[i.name]=i.dday; });
+  const overSet = new Set(overItems().map(i=>i.name));
   const core = r.ingredients;
-  let owned = core.filter(x=>have.has(x.n)).length;
-  const total = core.length;
-  // bonus: recipe that uses a soon-to-expire item gets priority flag
-  const usesSoon = soonItems().some(s=>core.some(x=>x.n===s.name));
-  return {owned, total, ratio:owned/total, usesSoon, missing:core.filter(x=>!have.has(x.n))};
+  const ownedList = core.filter(x=>have.has(x.n));
+  const owned = ownedList.length, total = core.length;
+  const usedDdays = ownedList.map(x=>ddayByName[x.n]).filter(d=>d!=null);
+  const minUsedDday = usedDdays.length ? Math.min(...usedDdays) : 999;  // 쓰는 재료 중 가장 임박
+  const usesSoon = minUsedDday<=2;
+  const usesOver = ownedList.some(x=>overSet.has(x.n));
+  return {owned, total, ratio:owned/total, usesSoon, minUsedDday, usesOver, missing:core.filter(x=>!have.has(x.n))};
 }
 function recommended(limit=99){
-  return RECIPES
-    .map(r=>({r, m:recipeMatch(r)}))
-    .sort((a,b)=> (b.m.usesSoon - a.m.usesSoon) || (b.m.ratio - a.m.ratio) || (a.r.time-b.r.time))
-    .slice(0,limit);
+  return RECIPES.map(r=>({r, m:recipeMatch(r)})).sort((a,b)=>{
+    if(a.m.usesSoon!==b.m.usesSoon) return b.m.usesSoon-a.m.usesSoon;                 // ④ 임박 재료 쓰는 메뉴 먼저
+    if(a.m.usesSoon && b.m.usesSoon && a.m.minUsedDday!==b.m.minUsedDday)
+      return a.m.minUsedDday-b.m.minUsedDday;                                          //    더 임박한 것 우선
+    if(b.m.ratio!==a.m.ratio) return b.m.ratio-a.m.ratio;                              // 보유 비율 높은 것
+    if(a.m.usesOver!==b.m.usesOver) return b.m.usesOver-a.m.usesOver;                  // ⑥ 과잉 재고 소진
+    return a.r.time-b.r.time;
+  }).slice(0,limit);
 }
 function barColor(ratio){ return ratio>=0.8?"var(--green)": ratio>=0.6?"var(--amber)":"var(--terra)"; }
 
@@ -511,8 +529,11 @@ function viewHome(){
   const N = 3;
   const recs = all.length ? Array.from({length:Math.min(N,all.length)},(_,i)=>all[(recOffset+i)%all.length]) : [];
   const soon = soonItems().length;
+  const over = overItems();
   const greet = soon>0
     ? `엄마! 냉장고 보니까<br>${esc(soonItems()[0].name)} 곧 상하겠어!<br>오늘 이걸로 뭐 해먹을까? :)`
+    : over.length>0
+    ? `엄마! ${esc(over[0].name)} ${esc(over[0].qty)}나 있어!<br>많을 때 얼른 써버리자~<br>이걸로 뭐 만들까? 🐻`
     : `엄마! 냉장고 빵빵하다 🐻<br>오늘은 뭐가 먹고 싶어?<br>꼬미가 같이 골라줄게!`;
   return `
   <div class="pad">
@@ -592,42 +613,60 @@ function invCell(it){
 /* ---------- CHAT (꼬미 AI) ---------- */
 function viewChat(){
   const online = CLI || !!S.apiKey;
-  const stTxt = CLI ? '로컬 두뇌 · 상담중' : (online ? '레시피 상담중' : '설정에서 API 키를 넣어줘');
+  const isMimi = S.chatWho==='komimi';
+  const head = isMimi ? ICON.komimiHead : ICON.komiHead;
+  const stTxt = isMimi
+    ? (online ? '배달 추천 중 🛵' : '설정에서 API 키를 넣어줘')
+    : (CLI ? '로컬 두뇌 · 상담중' : (online ? '레시피 상담중' : '설정에서 API 키를 넣어줘'));
   return `
   <div class="chat-head">
-    <div class="av"><img src="${ICON.komiHead}"></div>
-    <div style="flex:1">
-      <div class="nm">꼬미</div>
+    <div class="av"><img src="${head}"></div>
+    <div style="flex:1;min-width:0">
+      <div class="nm">${isMimi?'꼬미미':'꼬미'}</div>
       <div class="st ${online?'':'off'}"><i></i>${stTxt}</div>
+    </div>
+    <div class="who-tabs">
+      <button class="${!isMimi?'on':''}" data-who="komi">🐻 집밥</button>
+      <button class="${isMimi?'on':''}" data-who="komimi">🛵 배달</button>
     </div>
   </div>
   <div class="msgs" id="msgs">${renderMsgs()}</div>
   <div class="composer">
-    <input id="chatInput" placeholder="${online?'메시지를 입력하세요…':'먼저 MY에서 API 키를 등록해줘'}" ${online?'':'disabled'}>
+    <input id="chatInput" placeholder="${online?(isMimi?'뭐가 땡겨? 기분도 말해줘…':'메시지를 입력하세요…'):'먼저 MY에서 API 키를 등록해줘'}" ${online?'':'disabled'}>
     <button class="send" id="sendBtn" ${online?'':'disabled'}>▶</button>
   </div>`;
 }
 function renderMsgs(){
-  if(S.chat.length===0){
-    // intro + quick chips
+  const isMimi = S.chatWho==='komimi';
+  const head = isMimi ? ICON.komimiHead : ICON.komiHead;
+  const arr = curChat();
+  if(arr.length===0){
+    const intro = isMimi
+      ? `엄마... 나 꼬미미야 😴\n오늘은 배달 먹고 싶구나?\n기분이나 땡기는 거 말해줘~`
+      : `엄마! 나 꼬미야 🐻\n엄마 냉장고에 뭐 있는지 다 알아!\n오늘은 뭐가 먹고 싶어?`;
+    const chips = isMimi
+      ? `<button class="chip hot" data-say="좀 매콤한 거 땡겨">매콤한 거</button>
+         <button class="chip" data-say="오늘 너무 지쳐서 위로되는 야식 먹고 싶어">지친 날 야식</button>
+         <button class="chip" data-say="비 와서 따끈한 국물 배달 먹고 싶어">비 오는 날</button>
+         <button class="chip" data-say="혼자 먹기 좋은 가벼운 배달 추천해줘">혼밥</button>`
+      : `<button class="chip hot" data-say="국물 있는 거 먹고 싶어!">국물 요리</button>
+         <button class="chip" data-say="간단하게 만들 수 있는 거 추천해줘">간단하게</button>
+         <button class="chip" data-say="든든한 한 끼 추천해줘">든든하게</button>
+         <button class="chip" data-say="곧 상할 재료부터 써먹고 싶어">곧 상할 재료로</button>`;
     return `
       <div class="row">
-        <div class="av"><img src="${ICON.komiHead}"></div>
-        <div class="bub k">엄마! 나 꼬미야 🐻\n엄마 냉장고에 뭐 있는지 다 알아!\n오늘은 뭐가 먹고 싶어?</div>
+        <div class="av"><img src="${head}"></div>
+        <div class="bub k">${intro}</div>
       </div>
-      <div class="chips" id="introChips">
-        <button class="chip hot" data-say="국물 있는 거 먹고 싶어!">국물 요리</button>
-        <button class="chip" data-say="간단하게 만들 수 있는 거 추천해줘">간단하게</button>
-        <button class="chip" data-say="든든한 한 끼 추천해줘">든든하게</button>
-        <button class="chip" data-say="곧 상할 재료부터 써먹고 싶어">곧 상할 재료로</button>
-      </div>`;
+      <div class="chips" id="introChips">${chips}</div>`;
   }
-  return S.chat.map(msgRow).join("");
+  return arr.map(m=>msgRow(m, isMimi)).join("");
 }
-function msgRow(m){
+function msgRow(m, isMimi){
   if(m.role==="user"){
     return `<div class="row me"><div class="bub me">${esc(m.text)}</div></div>`;
   }
+  const head = isMimi ? ICON.komimiHead : ICON.komiHead;
   let rec = "";
   if(m.recipeId){
     const r = RECIPES.find(x=>x.id===m.recipeId);
@@ -639,7 +678,7 @@ function msgRow(m){
     }
   }
   return `<div class="row">
-    <div class="av"><img src="${ICON.komiHead}"></div>
+    <div class="av"><img src="${head}"></div>
     <div class="bub k">${m.text? esc(m.text) : '<span class="typing"><i></i><i></i><i></i></span>'}${rec}</div>
   </div>`;
 }
@@ -648,6 +687,10 @@ function afterChat(){
   const inp = $("#chatInput"), btn = $("#sendBtn");
   if(btn) btn.onclick = ()=>sendChat(inp.value);
   if(inp) inp.onkeydown = e=>{ if(e.key==="Enter") sendChat(inp.value); };
+  // 꼬미(집밥) ↔ 꼬미미(배달) 전환
+  document.querySelectorAll(".who-tabs [data-who]").forEach(b=>b.onclick=()=>{
+    if(S.chatWho!==b.dataset.who){ S.chatWho=b.dataset.who; save(); render(); }
+  });
   bindChatBody(); // 인트로 칩·레시피 카드 이벤트 연결
 }
 
@@ -1071,23 +1114,44 @@ ${recipes}
 - 재고에 없는 재료가 필요하면 솔직하게 알려주되, 너무 길게 늘어놓지는 마.`;
 }
 
+function komimiSystemPrompt(){
+  return `너는 '꼬미미'라는 이름의 곰돌이야.
+
+[정체성]
+- 너는 5살쯤 된 남자아이 곰돌이고, 형 '꼬미'의 한 살 어린 남동생이야. 사용자를 항상 "엄마"라고 불러.
+- 늘 졸린 듯 나른하고 느긋한 반말 말투. 짧고 귀엽게. 가끔 😴 🛵 이모지.
+- 형 꼬미는 집밥(냉장고 요리) 담당, 너는 '배달 음식' 추천 담당이야.
+
+[배달 추천 방법]
+- 엄마의 기분·상황·땡기는 맛(매운거, 느끼한거, 따끈한 국물, 가벼운거, 든든한거 등)을 먼저 살펴.
+- 한국에서 흔하게 시켜 먹는 배달 음식 중에서 골라줘:
+  치킨(후라이드·양념), 피자, 족발·보쌈, 중국집(짜장·짬뽕·탕수육), 떡볶이·분식, 햄버거,
+  국밥·찌개, 마라탕, 초밥·회, 곱창, 샐러드·포케, 닭발, 야식(라면·죽) 등.
+- 대화는 짧게 주고받되, 마지막엔 꼭 '하나'를 콕 집어 추천하고, 왜 지금 엄마한테 좋은지 한 줄로 말해줘.
+  (예: "오늘은 양념치킨 어때? 매콤달콤한 게 지친 하루엔 딱이야 🛵")
+- 특정 가게·브랜드명은 말하지 말고 메뉴 종류로. 냉장고 요리 얘기는 형 담당이니 배달에 집중해.`;
+}
+
 async function sendChat(text){
   text = (text||"").trim();
   if(!text) return;
   if(!CLI && !S.apiKey){ toast("MY에서 API 키부터 등록해줘 🔑"); return; }
 
-  // push user msg + placeholder assistant
-  S.chat.push({role:"user", text});
-  const aIdx = S.chat.push({role:"assistant", text:""}) - 1;
+  const who = S.chatWho;
+  const arr = curChat();
+  arr.push({role:"user", text});
+  const aIdx = arr.push({role:"assistant", text:""}) - 1;
   save();
-  // re-render chat preserving input cleared
   rerenderChatPartial();
 
-  // 로컬 CLI 두뇌(내 구독)로 처리 — API 키 불필요
-  if(CLI){ return komiViaCLI(aIdx); }
+  const sys = who==='komimi' ? komimiSystemPrompt() : komiSystemPrompt();
+  const fallback = who==='komimi' ? "음… 뭐 먹지 😴" : "음… 뭐가 좋을까? 🐻";
 
-  // build message history for API (strip recipe tags from prior assistant msgs is fine)
-  const messages = S.chat.slice(0, aIdx).map(m=>({
+  // 로컬 CLI 두뇌(내 구독)로 처리 — API 키 불필요
+  if(CLI){ return komiViaCLI(aIdx, arr, sys, who, fallback); }
+
+  // API 경로 (브라우저 직접 호출)
+  const messages = arr.slice(0, aIdx).map(m=>({
     role: m.role==="user"?"user":"assistant",
     content: m.text || "…"
   })).filter(m=>m.content.trim());
@@ -1104,7 +1168,7 @@ async function sendChat(text){
       body: JSON.stringify({
         model: S.model || "claude-haiku-4-5",
         max_tokens: 600,
-        system: komiSystemPrompt(),
+        system: sys,
         messages,
         stream: true,
       }),
@@ -1113,7 +1177,6 @@ async function sendChat(text){
       let info=""; try{ const j=await res.json(); info = j.error?.message||""; }catch(e){}
       throw new Error((res.status===401?"API 키가 올바른지 확인해줘.":info)|| ("오류 "+res.status));
     }
-    // stream SSE
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let buf="", acc="";
@@ -1132,40 +1195,46 @@ async function sendChat(text){
           const ev = JSON.parse(payload);
           if(ev.type==="content_block_delta" && ev.delta?.type==="text_delta"){
             acc += ev.delta.text;
-            S.chat[aIdx].text = stripTag(acc);
-            updateLastBubble(S.chat[aIdx]);
+            arr[aIdx].text = stripTag(acc);
+            updateLastBubble(arr[aIdx]);
           }
         }catch(e){}
       }
     }
-    // finalize: parse recipe tag
-    const tag = acc.match(/\[\[recipe:([a-z_]+)\]\]/);
-    S.chat[aIdx].text = stripTag(acc).trim() || "음… 뭐가 좋을까? 🐻";
-    if(tag && RECIPES.some(r=>r.id===tag[1])) S.chat[aIdx].recipeId = tag[1];
+    if(who!=='komimi'){
+      const tag = acc.match(/\[\[recipe:([a-z_]+)\]\]/);
+      if(tag && RECIPES.some(r=>r.id===tag[1])) arr[aIdx].recipeId = tag[1];
+    }
+    arr[aIdx].text = stripTag(acc).trim() || fallback;
     save();
     rerenderChatPartial();
   }catch(err){
-    S.chat[aIdx].text = "앗, 연결에 문제가 생겼어 🐻\n"+(err.message||"잠시 후 다시 시도해줘.");
+    arr[aIdx].text = "앗, 연결에 문제가 생겼어 🐻\n"+(err.message||"잠시 후 다시 시도해줘.");
     save(); rerenderChatPartial();
   }
 }
-async function komiViaCLI(aIdx){
-  const conv = S.chat.slice(0,aIdx).map(m=> (m.role==="user"?"사용자: ":"꼬미: ")+(m.text||"")).join("\n");
-  const prompt = conv + "\n\n위 대화에 이어, 꼬미로서 다음 한 마디만 자연스럽게 답해줘. 레시피를 콕 집어 추천할 땐 마지막 줄에 [[recipe:레시피id]] 형식으로 표시해줘.";
+async function komiViaCLI(aIdx, arr, sys, who, fallback){
+  const me = who==='komimi' ? '꼬미미' : '꼬미';
+  const conv = arr.slice(0,aIdx).map(m=> (m.role==="user"?"엄마: ":me+": ")+(m.text||"")).join("\n");
+  const tail = who==='komimi'
+    ? `\n\n위 대화에 이어, 꼬미미로서 다음 한 마디만 자연스럽게 답해줘. 마지막엔 배달 메뉴 하나를 콕 집어 추천해.`
+    : `\n\n위 대화에 이어, 꼬미로서 다음 한 마디만 자연스럽게 답해줘. 레시피를 콕 집어 추천할 땐 마지막 줄에 [[recipe:레시피id]] 형식으로 표시해줘.`;
   try{
     const res = await fetch("api/komi",{
       method:"POST", headers:{"content-type":"application/json","ngrok-skip-browser-warning":"1"},
-      body: JSON.stringify({ system: komiSystemPrompt(), prompt })
+      body: JSON.stringify({ system: sys, prompt: conv + tail })
     });
     if(!res.ok){ let m=""; try{ m=(await res.json()).error||""; }catch(e){} throw new Error(m || ("오류 "+res.status)); }
     const j = await res.json();
     const raw = j.text || "";
-    const tag = raw.match(/\[\[recipe:([a-z_]+)\]\]/);
-    S.chat[aIdx].text = stripTag(raw).trim() || "음… 뭐가 좋을까? 🐻";
-    if(tag && RECIPES.some(r=>r.id===tag[1])) S.chat[aIdx].recipeId = tag[1];
+    if(who!=='komimi'){
+      const tag = raw.match(/\[\[recipe:([a-z_]+)\]\]/);
+      if(tag && RECIPES.some(r=>r.id===tag[1])) arr[aIdx].recipeId = tag[1];
+    }
+    arr[aIdx].text = stripTag(raw).trim() || fallback;
     save(); rerenderChatPartial();
   }catch(err){
-    S.chat[aIdx].text = "앗, 로컬 꼬미 연결에 문제가 생겼어 🐻\n"+(err.message||"맥에서 server.py가 켜져 있는지 확인해줘.");
+    arr[aIdx].text = "앗, 연결에 문제가 생겼어 🐻\n"+(err.message||"맥에서 server.py가 켜져 있는지 확인해줘.");
     save(); rerenderChatPartial();
   }
 }
