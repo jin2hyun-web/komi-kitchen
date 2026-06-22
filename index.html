@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1f1710">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>꼬미의 부엌</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Galmuri11/Galmuri11.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Galmuri11/subsets/Galmuri11-dynamic-subset.css">
+<style>
+/* ===== Design A · 따뜻한 나무 선반 ===== */
+:root{
+  --bg:#f6e9cd;          /* screen base */
+  --ink:#4a3526;         /* primary text */
+  --ink2:#8a6f54;        /* muted text */
+  --ink3:#a07b52;        /* label */
+  --line:#6b4527;        /* heavy border / wood */
+  --line2:#caa877;       /* soft border */
+  --card:#fffaf0;        /* card bg */
+  --tan:#efdcb6;         /* panel */
+  --tan2:#f3d9ad;        /* topbar / shelf */
+  --terra:#c8553d;       /* accent (꼬미) */
+  --terra-d:#8a3a28;
+  --green:#7d9b54;
+  --green-d:#4f6b34;
+  --amber:#e0a437;
+  --shadow:#c8a574;
+  --pink:#fbe7df;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Galmuri11',monospace;
+  background:#1f1710;
+  color:var(--ink);
+  overscroll-behavior:none;
+}
+img{image-rendering:pixelated;-webkit-user-drag:none;user-select:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+input,textarea{font-family:inherit;}
+
+/* phone frame on desktop, fullscreen on mobile */
+#frame{
+  max-width:430px;margin:0 auto;height:100dvh;position:relative;
+  background:var(--bg);
+  background-image:repeating-linear-gradient(#00000000 0 38px,#bb9a6e22 38px 40px);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+@media(min-width:480px){
+  body{display:flex;align-items:center;justify-content:center;padding:18px;}
+  #frame{height:min(900px,96dvh);border-radius:40px;
+    box-shadow:0 18px 50px rgba(60,40,20,.45),0 0 0 10px #1f1710,0 0 0 12px #3a2a1c;}
+}
+
+/* ===== top status bar ===== */
+.status{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;color:var(--ink);flex:none;}
+.status .sig{display:flex;align-items:flex-end;gap:6px;}
+.status .bars{display:flex;align-items:flex-end;gap:2px;}
+.status .bars i{width:3px;background:var(--ink);display:block;}
+.status .bat{width:20px;height:11px;border:2px solid var(--ink);border-radius:3px;position:relative;}
+.status .bat::after{content:"";position:absolute;left:1px;top:1px;bottom:1px;width:10px;background:var(--ink);border-radius:1px;}
+
+/* ===== screen scroll area ===== */
+#view{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch;}
+.pad{padding:6px 18px 0;}
+.h-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.title{font-weight:700;font-size:18px;color:var(--ink);}
+.title-lg{font-weight:700;font-size:20px;color:var(--ink);}
+
+/* pills */
+.pills{display:flex;gap:6px;}
+.pill{display:flex;align-items:center;gap:5px;background:var(--card);border:2px solid var(--line2);border-radius:8px;padding:4px 8px;font-size:11px;color:var(--ink2);}
+.pill img{width:13px;height:13px;}
+.pill.leaf{color:#557a3f;}
+.pill.warn{background:var(--pink);border-color:#d99a86;color:var(--terra);}
+
+/* 꼬미 greeting card */
+.komi-card{position:relative;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:14px 14px 14px 96px;box-shadow:0 4px 0 var(--shadow),inset 0 3px 0 #fff;margin-bottom:18px;min-height:78px;}
+.komi-card img.komi{position:absolute;left:-6px;bottom:-4px;width:104px;height:auto;filter:drop-shadow(0 3px 0 #00000018);}
+.komi-card .who{font-size:11px;color:var(--terra);margin-bottom:6px;}
+.komi-card .say{font-size:13px;line-height:1.7;color:var(--ink);}
+
+/* section head */
+.sec{display:flex;align-items:center;gap:7px;margin-bottom:12px;}
+.sec img{width:16px;height:16px;}
+.sec b{font-weight:700;font-size:15px;color:var(--ink);}
+.sec .more{margin-left:auto;font-size:11px;color:var(--green);}
+
+/* recipe list card */
+.rlist{display:flex;flex-direction:column;gap:12px;padding-bottom:12px;}
+.rcard{display:flex;gap:13px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:11px;box-shadow:0 4px 0 var(--shadow);text-align:left;width:100%;}
+.rcard:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow);}
+.rthumb{width:62px;height:62px;flex:none;background:var(--pink);border:2px solid var(--line2);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.rthumb img{width:46px;height:46px;}
+.rbody{flex:1;min-width:0;}
+.rname{font-size:14px;color:var(--ink);margin-bottom:6px;}
+.rmeta{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--ink2);}
+.rmeta .ico{display:flex;align-items:center;gap:3px;}
+.rmeta img{width:12px;height:12px;}
+.bar{height:7px;background:#ecdcc0;border-radius:4px;margin-top:7px;overflow:hidden;}
+.bar > i{display:block;height:100%;background:var(--green);}
+
+/* inventory tabs */
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+.tab{display:flex;align-items:center;gap:4px;white-space:nowrap;background:var(--card);border:2px solid var(--line2);border-radius:9px;padding:6px 9px;font-size:11px;color:var(--ink2);flex:none;}
+.tab img{width:12px;height:12px;}
+.tab.on{background:var(--line);border-color:#4a2f1a;color:#fbe7c8;}
+
+/* inventory grid */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding-bottom:18px;}
+.cell{background:var(--tan);border:3px solid var(--line);border-radius:12px;padding:8px 6px 7px;display:flex;flex-direction:column;align-items:center;box-shadow:inset 0 3px 0 #fff6e0,inset 0 -4px 0 #d6bd92;position:relative;}
+.cell:active{transform:translateY(1px);}
+.cell .dot{position:absolute;top:5px;right:6px;width:9px;height:9px;border:1px solid var(--line);border-radius:50%;}
+.cell .ico{width:42px;height:42px;display:flex;align-items:center;justify-content:center;}
+.cell .ico img{width:42px;height:42px;}
+.cell .nm{font-size:11px;color:var(--ink);margin-top:4px;}
+.cell .qt{font-size:10px;color:var(--ink2);}
+.cell.add{background:#f3ead4;border:3px dashed #c0a06e;justify-content:center;min-height:96px;cursor:pointer;}
+.cell.add img{width:22px;height:22px;opacity:.55;}
+.cell.add .nm{color:var(--ink3);margin-top:6px;}
+.empty{grid-column:1/-1;text-align:center;color:var(--ink2);font-size:12px;padding:24px 0;}
+
+/* chat */
+.chat-head{display:flex;align-items:center;gap:11px;padding:6px 18px 12px;border-bottom:3px solid var(--line);background:var(--tan2);flex:none;}
+.chat-head .av{width:42px;height:42px;background:var(--card);border:2px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.chat-head .av img{width:34px;height:auto;margin-top:4px;}
+.chat-head .nm{font-weight:700;font-size:15px;color:var(--ink);}
+.chat-head .st{font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;}
+.chat-head .st i{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;}
+.chat-head .st.off{color:var(--ink2);} .chat-head .st.off i{background:var(--line2);}
+.msgs{flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
+.row{display:flex;gap:8px;align-items:flex-end;}
+.row.me{justify-content:flex-end;}
+.row .av{width:32px;height:32px;flex:none;background:var(--card);border:2px solid var(--line);border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.row .av img{width:26px;margin-top:3px;}
+.bub{border-radius:4px 14px 14px 14px;padding:11px 13px;font-size:13px;line-height:1.7;max-width:74%;box-shadow:0 3px 0 var(--shadow);white-space:pre-wrap;word-break:break-word;}
+.bub.k{background:var(--card);border:2px solid var(--line);color:var(--ink);}
+.bub.me{background:var(--terra);border:2px solid var(--terra-d);border-radius:14px 14px 4px 14px;color:#fff;box-shadow:0 3px 0 var(--terra-d);}
+.chips{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+.chip{background:#fff;border:2px solid var(--line2);border-radius:20px;padding:7px 13px;font-size:12px;color:var(--ink2);}
+.chip.hot{border-color:var(--terra);color:var(--terra);}
+.rec-in-chat{display:flex;gap:10px;align-items:center;background:var(--pink);border:2px solid var(--line2);border-radius:10px;padding:8px;margin-top:10px;cursor:pointer;}
+.rec-in-chat .t{width:44px;height:44px;flex:none;background:#fff;border:2px solid var(--line2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.rec-in-chat .t img{width:34px;height:34px;}
+.rec-in-chat .nm{font-size:12px;color:var(--ink);margin-bottom:3px;}
+.rec-in-chat .mt{font-size:10px;color:var(--green);}
+.typing{display:inline-flex;gap:4px;align-items:center;}
+.typing i{width:6px;height:6px;background:var(--ink2);border-radius:50%;animation:bnc 1s infinite;}
+.typing i:nth-child(2){animation-delay:.15s;} .typing i:nth-child(3){animation-delay:.3s;}
+@keyframes bnc{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-4px);opacity:1;}}
+.composer{padding:10px 14px calc(14px + env(safe-area-inset-bottom));background:var(--tan2);border-top:3px solid var(--line);display:flex;gap:9px;align-items:center;flex:none;}
+.composer input{flex:1;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:10px 15px;font-size:13px;color:var(--ink);outline:none;}
+.composer input::placeholder{color:#a89070;}
+.composer .send{width:42px;height:42px;flex:none;background:var(--green);border:2px solid var(--green-d);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;box-shadow:0 3px 0 var(--green-d);}
+.composer .send:active{transform:translateY(2px);box-shadow:0 1px 0 var(--green-d);}
+.composer .send[disabled]{opacity:.5;}
+
+/* MY / settings */
+.set-list{display:flex;flex-direction:column;gap:12px;padding-bottom:20px;}
+.set-card{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 0 var(--shadow);}
+.set-card h4{margin:0 0 4px;font-size:14px;color:var(--ink);}
+.set-card p{margin:0 0 10px;font-size:11px;color:var(--ink2);line-height:1.6;}
+.set-card input,.set-card select{width:100%;background:var(--bg);border:2px solid var(--line2);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--ink);outline:none;}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.linkbtn{background:var(--tan);border:2px solid var(--line2);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--ink);}
+.linkbtn.danger{color:var(--terra);border-color:#d99a86;background:var(--pink);}
+.key-state{font-size:10px;padding:3px 7px;border-radius:6px;}
+.key-state.ok{background:#eef3e3;color:var(--green-d);}
+.key-state.no{background:var(--pink);color:var(--terra);}
+
+/* bottom nav */
+.nav{height:74px;display:flex;align-items:center;justify-content:space-around;padding:6px 12px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(#fbf3e0,#f0e0c0);border-top:3px solid var(--line);flex:none;}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.6;flex:1;}
+.nav button.on{opacity:1;}
+.nav button .ib{width:38px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.nav button.on .ib{background:var(--tan2);border:2px solid var(--line);}
+.nav button img{width:18px;height:18px;}
+.nav button span{font-size:10px;color:var(--line);}
+.nav button.on span{color:var(--terra);}
+.nav .fab{width:52px;height:52px;margin-top:-22px;background:var(--terra);border:3px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 var(--terra-d);opacity:1;flex:none;}
+.nav .fab img{width:24px;height:24px;}
+.nav .fab:active{transform:translateY(2px);box-shadow:0 2px 0 var(--terra-d);}
+
+/* ===== sheet / modal ===== */
+.sheet-wrap{position:absolute;inset:0;z-index:50;display:none;}
+.sheet-wrap.open{display:block;}
+.scrim{position:absolute;inset:0;background:rgba(40,26,16,.5);animation:fade .2s;}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:92%;background:var(--bg);
+  background-image:repeating-linear-gradient(#00000000 0 38px,#bb9a6e22 38px 40px);
+  border-radius:24px 24px 0 0;border-top:3px solid var(--line);
+  display:flex;flex-direction:column;animation:up .26s cubic-bezier(.2,.9,.3,1.1);}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:3px solid var(--line);background:var(--tan2);border-radius:21px 21px 0 0;flex:none;}
+.sheet-head .back{font-size:22px;color:var(--line);width:28px;text-align:left;}
+.sheet-head .t{font-weight:700;font-size:16px;color:var(--ink);flex:1;}
+.sheet-body{overflow-y:auto;padding:14px 18px;flex:1;-webkit-overflow-scrolling:touch;}
+.sheet-foot{padding:12px 18px calc(18px + env(safe-area-inset-bottom));border-top:2px solid #e2cda0;background:var(--bg);flex:none;}
+
+/* add-ingredient sheet bits */
+.seg{display:flex;background:var(--tan);border:2px solid var(--line2);border-radius:11px;padding:4px;margin-bottom:16px;}
+.seg button{flex:1;text-align:center;padding:8px 0;font-size:12px;color:var(--ink2);border-radius:8px;}
+.seg button.on{background:var(--line);color:#fbe7c8;}
+.lbl{font-size:12px;color:var(--ink2);margin-bottom:9px;}
+.pickgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.pick{background:var(--tan);border:2px solid var(--line2);border-radius:11px;padding:7px 0 5px;display:flex;flex-direction:column;align-items:center;}
+.pick.on{background:var(--pink);border:3px solid var(--terra);box-shadow:0 3px 0 var(--shadow);}
+.pick .ic{width:34px;height:34px;display:flex;align-items:center;justify-content:center;}
+.pick .ic img{width:34px;height:34px;}
+.pick .nm{font-size:10px;color:var(--ink2);margin-top:3px;}
+.pick.on .nm{color:var(--ink);}
+.stepper{display:flex;align-items:center;gap:14px;}
+.stepper button{width:34px;height:34px;background:var(--card);border:2px solid var(--line);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--line);box-shadow:0 3px 0 var(--shadow);}
+.stepper .val{font-weight:700;font-size:16px;color:var(--ink);min-width:54px;text-align:center;}
+.loc-row{display:flex;gap:6px;margin-bottom:16px;}
+.loc-row button{flex:1;text-align:center;background:var(--card);color:var(--ink2);border:2px solid var(--line2);border-radius:9px;padding:8px 0;font-size:11px;white-space:nowrap;}
+.loc-row button.on{background:var(--line);color:#fbe7c8;border-color:#4a2f1a;}
+.field{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:2px solid var(--line2);border-radius:11px;padding:11px 13px;margin-bottom:12px;}
+.field label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);}
+.field img{width:14px;height:14px;}
+.field input{border:2px solid var(--line2);border-radius:7px;padding:5px 8px;font-size:12px;color:var(--ink);background:var(--bg);width:130px;text-align:right;outline:none;}
+.cta{height:52px;width:100%;background:var(--terra);border:3px solid var(--line);border-radius:13px;display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 0 var(--terra-d);}
+.cta:active{transform:translateY(2px);box-shadow:0 2px 0 var(--terra-d);}
+.cta img{width:18px;height:18px;}
+.cta.green{background:var(--green);border-color:var(--green-d);box-shadow:0 4px 0 var(--green-d);}
+.cta.green:active{box-shadow:0 2px 0 var(--green-d);}
+.cta[disabled]{opacity:.5;}
+
+/* recipe detail */
+.rd-hero{position:relative;height:118px;flex:none;background:var(--pink);background-image:repeating-linear-gradient(135deg,#f4d6c8 0 10px,#fbe7df 10px 20px);display:flex;align-items:center;justify-content:center;border-bottom:3px solid var(--line);}
+.rd-hero .icon{width:78px;height:78px;background:var(--card);border:3px solid var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 var(--shadow);}
+.rd-hero .icon img{width:56px;height:56px;}
+.rd-meta{display:flex;gap:7px;margin:8px 0 12px;flex-wrap:wrap;}
+.rd-meta .m{display:flex;align-items:center;gap:5px;background:var(--card);border:2px solid var(--line2);border-radius:8px;padding:5px 9px;font-size:11px;color:var(--ink2);}
+.rd-meta img{width:12px;height:12px;}
+.ing-row{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.ing-row .ic{width:30px;height:30px;flex:none;background:var(--pink);border:2px solid var(--line2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.ing-row .ic img{width:22px;height:22px;}
+.ing-row .ic .sw{width:16px;height:16px;border:1px solid var(--line);border-radius:4px;}
+.ing-row .nm{flex:1;min-width:0;font-size:12px;color:var(--ink);}
+.ing-row .nm small{font-size:10px;color:var(--terra);}
+.ing-row .amt{font-size:11px;color:var(--ink2);background:var(--card);border:2px solid var(--line2);border-radius:8px;padding:4px 9px;}
+.ing-row.miss .nm{color:#b06b50;}
+.ing-row .have{font-size:10px;color:var(--green-d);background:#eef3e3;border-radius:6px;padding:3px 7px;}
+.sub-lbl{display:flex;align-items:center;gap:5px;margin:14px 0 8px;font-size:11px;color:var(--ink3);}
+.sub-lbl img{width:13px;height:13px;}
+
+/* toast */
+#toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+  background:var(--line);color:#fbe7c8;font-size:12px;padding:9px 16px;border-radius:20px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:90;box-shadow:0 4px 12px rgba(0,0,0,.3);white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.nodata{color:var(--ink2);font-size:12px;text-align:center;padding:30px 10px;line-height:1.7;}
+.mini-komi{width:34px;height:34px;flex:none;background:var(--card);border:2px solid var(--line);border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.mini-komi img{width:28px;margin-top:3px;}
+.komi-line{display:flex;align-items:center;gap:9px;margin-bottom:14px;}
+.komi-line .bub2{background:var(--card);border:2px solid var(--line);border-radius:4px 12px 12px 12px;padding:8px 11px;font-size:12px;color:var(--ink);box-shadow:0 3px 0 var(--shadow);}
+</style>
+</head>
+<body>
+<div id="frame">
+  <div class="status">
+    <span id="clock">9:41</span>
+    <span class="sig">
+      <span class="bars"><i style="height:5px"></i><i style="height:7px"></i><i style="height:9px"></i><i style="height:11px"></i></span>
+      <span class="bat"></span>
+    </span>
+  </div>
+
+  <div id="view"><!-- screen renders here --></div>
+
+  <div class="nav" id="nav"></div>
+
+  <div class="sheet-wrap" id="sheet"></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ========================================================================
+   꼬미의 부엌 — 냉장고 재고 기반 메뉴 추천 앱 (Design A)
+   ======================================================================== */
+
+const A = "assets/"; // asset path (dev). Single-file build injects window.AP with data URIs.
+function asset(f){ return (window.AP && window.AP[f]) || A+f; }
+const ICON = {
+  home:asset("ui_home.png"), carrot:asset("ui_carrot.png"), user:asset("ui_user.png"),
+  plus:asset("ui_plus.png"), plusLt:asset("ui_plus_lt.png"), clock:asset("ui_clock.png"),
+  clockLt:asset("ui_clock_lt.png"), star:asset("ui_star.png"), leaf:asset("ui_leaf.png"),
+  flame:asset("ui_flame.png"), fridge:asset("ui_fridge.png"), snow:asset("ui_snow.png"),
+  jar:asset("ui_jar.png"), sauce:asset("ui_sauce.png"), search:asset("ui_search.png"),
+  komiHead:asset("komi_head.png"), komiRelax:asset("komi_relax.png"), komiFront:asset("komi_front.png"),
+};
+// ingredients that have dedicated pixel art
+const FOOD_ART = {
+  "당근":"food_carrot","계란":"food_egg","우유":"food_milk","토마토":"food_tomato",
+  "감자":"food_potato","두부":"food_tofu","대파":"food_greenonion","치즈":"food_cheese",
+  "양파":"food_onion","버섯":"food_mushroom","다진마늘":"food_garlic","마늘":"food_garlic",
+};
+// fallback colored swatch for ingredients without art (김치, 고춧가루…)
+const SWATCH = {
+  "김치":"#c8553d","고춧가루":"#d8463a","간장":"#5a3a22","돼지고기":"#e0a0a0",
+  "밥":"#fbf3e0","소금":"#ffffff","설탕":"#f3ead4","참기름":"#d8a24a",
+  "버터":"#f0d27a","후추":"#3a2a1c","당면":"#e8d8b0","애호박":"#7d9b54",
+};
+const LOCATIONS = [
+  {key:"fridge", label:"냉장고", icon:asset("ui_fridge_lt.png")},
+  {key:"freezer",label:"냉동고", icon:asset("ui_snow.png")},
+  {key:"pantry", label:"팬트리", icon:asset("ui_jar.png")},
+  {key:"sauce",  label:"양념장", icon:asset("ui_sauce.png")},
+];
+
+/* ---------- ingredient art helper ---------- */
+function ingIcon(name, size=42){
+  const art = FOOD_ART[name];
+  if(art) return `<img src="${asset(art+".png")}" style="width:${size}px;height:${size}px;" alt="${name}">`;
+  const c = SWATCH[name] || "#caa877";
+  const s = Math.round(size*0.42);
+  return `<span class="sw" style="width:${s}px;height:${s}px;background:${c};border:1px solid var(--line);border-radius:4px;display:inline-block;"></span>`;
+}
+
+/* ====================  RECIPE DATABASE  ==================== */
+const RECIPES = [
+  { id:"fried_rice", name:"계란 야채 볶음밥", art:"food_egg", time:15, level:"쉬움", servings:2,
+    tags:["#한그릇","#10분컷"],
+    ingredients:[{n:"계란",a:"2개"},{n:"당근",a:"¼개"},{n:"대파",a:"⅓대"},{n:"양파",a:"¼개"},{n:"밥",a:"1공기"}],
+    sauce:[{n:"간장",a:"1큰술"},{n:"소금",a:"약간"}],
+    steps:["팬에 기름을 두르고 잘게 썬 양파·당근을 볶아요.","밥을 넣고 계란을 풀어 함께 볶아요.","간장으로 간하고 대파를 올려 마무리!"] },
+  { id:"carrot_soup", name:"당근 크림 스프", art:"food_carrot", time:25, level:"보통", servings:2,
+    tags:["#포근한","#따끈"],
+    ingredients:[{n:"당근",a:"2개"},{n:"감자",a:"1개"},{n:"양파",a:"¼개"},{n:"우유",a:"1컵"}],
+    sauce:[{n:"버터",a:"1큰술"},{n:"소금",a:"약간"}],
+    steps:["당근·감자·양파를 버터에 볶아요.","물을 자작하게 붓고 푹 익혀요.","우유를 넣고 곱게 갈아 데우면 완성!"] },
+  { id:"kimchi_jjigae", name:"두부 김치찌개", art:"food_tofu", time:20, level:"쉬움", servings:2,
+    tags:["#국물","#든든"],
+    ingredients:[{n:"두부",a:"½모"},{n:"김치",a:"1컵"},{n:"양파",a:"¼개"},{n:"대파",a:"⅓대"},{n:"돼지고기",a:"100g"}],
+    sauce:[{n:"고춧가루",a:"1큰술"},{n:"간장",a:"1큰술"},{n:"다진마늘",a:"½큰술"}],
+    steps:["돼지고기와 김치를 볶아요.","물을 붓고 양념을 풀어 끓여요.","두부와 대파를 넣고 한소끔 더 끓이면 끝!"] },
+  { id:"tomato_egg", name:"토마토 계란 볶음", art:"food_tomato", time:12, level:"쉬움", servings:2,
+    tags:["#10분컷","#상큼"],
+    ingredients:[{n:"토마토",a:"2개"},{n:"계란",a:"2개"},{n:"대파",a:"¼대"}],
+    sauce:[{n:"소금",a:"약간"},{n:"설탕",a:"½큰술"}],
+    steps:["계란을 반숙으로 볶아 덜어둬요.","토마토를 넣고 가볍게 볶아요.","계란을 합치고 소금·설탕으로 간!"] },
+  { id:"potato_stir", name:"감자 채볶음", art:"food_potato", time:15, level:"쉬움", servings:2,
+    tags:["#밑반찬","#담백"],
+    ingredients:[{n:"감자",a:"2개"},{n:"당근",a:"¼개"},{n:"양파",a:"¼개"},{n:"대파",a:"¼대"}],
+    sauce:[{n:"소금",a:"약간"},{n:"참기름",a:"½큰술"}],
+    steps:["감자를 가늘게 채 썰어 물에 헹궈요.","당근·양파와 함께 센 불에 볶아요.","소금 간 후 참기름으로 마무리!"] },
+  { id:"cheese_omelet", name:"치즈 오믈렛", art:"food_egg", time:10, level:"쉬움", servings:1,
+    tags:["#아침","#10분컷"],
+    ingredients:[{n:"계란",a:"3개"},{n:"치즈",a:"2장"},{n:"우유",a:"2큰술"},{n:"양파",a:"⅛개"}],
+    sauce:[{n:"소금",a:"약간"},{n:"버터",a:"1큰술"}],
+    steps:["계란에 우유·소금을 풀어요.","버터 두른 팬에 부어 부드럽게 익혀요.","치즈를 올려 반으로 접으면 완성!"] },
+  { id:"tofu_jorim", name:"두부 조림", art:"food_tofu", time:18, level:"쉬움", servings:2,
+    tags:["#밑반찬","#든든"],
+    ingredients:[{n:"두부",a:"½모"},{n:"대파",a:"⅓대"},{n:"양파",a:"¼개"}],
+    sauce:[{n:"간장",a:"2큰술"},{n:"고춧가루",a:"1큰술"},{n:"다진마늘",a:"½큰술"}],
+    steps:["두부를 노릇하게 구워요.","양념을 섞어 자작하게 부어요.","대파를 올려 조리면 완성!"] },
+];
+
+/* ====================  STATE  ==================== */
+const TODAY = new Date();
+function dstr(d){return `${d.getMonth()+1}월 ${d.getDate()}일`;}
+const WD = ["일","월","화","수","목","금","토"];
+
+const DEFAULT_INV = [
+  {name:"당근", qty:"3개",  loc:"fridge", dday:6},
+  {name:"계란", qty:"6개",  loc:"fridge", dday:9},
+  {name:"우유", qty:"1팩",  loc:"fridge", dday:1},
+  {name:"토마토",qty:"4개", loc:"fridge", dday:5},
+  {name:"감자", qty:"5개",  loc:"pantry", dday:20},
+  {name:"두부", qty:"1모",  loc:"fridge", dday:2},
+  {name:"대파", qty:"1단",  loc:"fridge", dday:7},
+  {name:"치즈", qty:"7장",  loc:"fridge", dday:14},
+  {name:"양파", qty:"3개",  loc:"pantry", dday:18},
+  {name:"김치", qty:"넉넉", loc:"fridge", dday:30},
+  {name:"고춧가루",qty:"적당",loc:"sauce", dday:120},
+  {name:"간장", qty:"적당", loc:"sauce", dday:200},
+];
+
+const KEY = "komi-kitchen-v1";
+let S = load();
+
+function load(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(KEY));
+    if(raw && raw.inv) return Object.assign(defaultState(), raw);
+  }catch(e){}
+  return defaultState();
+}
+function defaultState(){
+  return {
+    inv: DEFAULT_INV.map((x,i)=>({id:"i"+i+"_"+Date.now(),...x})),
+    chat: [],
+    apiKey: "",
+    model: "claude-haiku-4-5",
+    screen: "home",
+    invTab: "fridge",
+  };
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify({inv:S.inv,chat:S.chat,apiKey:S.apiKey,model:S.model})); }
+
+/* ====================  HELPERS  ==================== */
+const $ = (s,el=document)=>el.querySelector(s);
+const esc = (s="")=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function invNames(){ return new Set(S.inv.map(i=>i.name)); }
+function freshness(it){ // returns {dot, label, color}
+  if(it.dday<=1) return {color:"var(--terra)", label:"D-"+it.dday, soon:true};
+  if(it.dday<=2) return {color:"var(--amber)", label:"D-"+it.dday, soon:true};
+  return {color:"var(--green)", label:"신선", soon:false};
+}
+function soonItems(){ return S.inv.filter(i=>i.dday<=2); }
+
+// how many of a recipe's ingredients you own (sauces count loosely)
+function recipeMatch(r){
+  const have = invNames();
+  const core = r.ingredients;
+  let owned = core.filter(x=>have.has(x.n)).length;
+  const total = core.length;
+  // bonus: recipe that uses a soon-to-expire item gets priority flag
+  const usesSoon = soonItems().some(s=>core.some(x=>x.n===s.name));
+  return {owned, total, ratio:owned/total, usesSoon, missing:core.filter(x=>!have.has(x.n))};
+}
+function recommended(limit=99){
+  return RECIPES
+    .map(r=>({r, m:recipeMatch(r)}))
+    .sort((a,b)=> (b.m.usesSoon - a.m.usesSoon) || (b.m.ratio - a.m.ratio) || (a.r.time-b.r.time))
+    .slice(0,limit);
+}
+function barColor(ratio){ return ratio>=0.8?"var(--green)": ratio>=0.6?"var(--amber)":"var(--terra)"; }
+
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 1700);
+}
+
+/* ====================  STATUS CLOCK  ==================== */
+function tickClock(){
+  const d=new Date(); const h=d.getHours(), m=d.getMinutes();
+  $("#clock").textContent = `${h}:${String(m).padStart(2,"0")}`;
+}
+setInterval(tickClock, 10000); tickClock();
+
+/* ====================  RENDER ROOT  ==================== */
+function render(){
+  const v = $("#view");
+  v.className = "";
+  if(S.screen==="home")  { v.innerHTML = viewHome();  v.style.overflowY="auto"; }
+  else if(S.screen==="fridge"){ v.innerHTML = viewFridge(); v.style.overflowY="auto"; }
+  else if(S.screen==="chat")  { v.innerHTML = viewChat(); afterChat(); }
+  else if(S.screen==="my")    { v.innerHTML = viewMy(); afterMy(); v.style.overflowY="auto"; }
+  renderNav();
+}
+
+/* ---------- HOME ---------- */
+function viewHome(){
+  const recs = recommended(3);
+  const soon = soonItems().length;
+  const greet = soon>0
+    ? `냉장고 보니까 ${esc(soonItems()[0].name)}이(가)<br>곧 상할 것 같아!<br>오늘 그걸로 뭐 해먹을까? :)`
+    : `냉장고 잘 채워놨네!<br>오늘은 뭐가 당겨?<br>같이 골라볼까 :)`;
+  return `
+  <div class="pad">
+    <div class="h-row">
+      <div class="title">꼬미의 부엌</div>
+      <div class="pills">
+        <div class="pill leaf"><img src="${ICON.leaf}">재고 ${S.inv.length}</div>
+        ${soon>0?`<div class="pill warn"><img src="${ICON.flame}">곧상함 ${soon}</div>`:""}
+      </div>
+    </div>
+
+    <div class="komi-card">
+      <img class="komi" src="${ICON.komiRelax}" alt="꼬미">
+      <div class="who">꼬미</div>
+      <div class="say">${greet}</div>
+    </div>
+
+    <div class="sec">
+      <img src="${ICON.star}"><b>오늘의 추천</b>
+      <span class="more" data-go-fridge>전체보기 ›</span>
+    </div>
+    <div class="rlist">
+      ${recs.map(({r,m})=>recipeCard(r,m)).join("")}
+    </div>
+  </div>`;
+}
+function recipeCard(r,m){
+  return `
+  <button class="rcard" data-recipe="${r.id}">
+    <div class="rthumb"><img src="${asset(r.art+".png")}" alt=""></div>
+    <div class="rbody">
+      <div class="rname">${esc(r.name)} ${m.usesSoon?'<span style="color:var(--terra);font-size:11px;">· 추천!</span>':''}</div>
+      <div class="rmeta">
+        <span class="ico"><img src="${ICON.clock}">${r.time}분</span>
+        <span style="color:${barColor(m.ratio)}">재료 ${m.owned}/${m.total} 보유</span>
+      </div>
+      <div class="bar"><i style="width:${Math.round(m.ratio*100)}%;background:${barColor(m.ratio)}"></i></div>
+    </div>
+  </button>`;
+}
+
+/* ---------- FRIDGE (inventory) ---------- */
+function viewFridge(){
+  const items = S.inv.filter(i=>i.loc===S.invTab);
+  const fresh = S.inv.filter(i=>i.dday>2).length;
+  const soon = soonItems().length;
+  return `
+  <div class="pad">
+    <div class="h-row">
+      <div class="title">내 부엌</div>
+      <div class="pills">
+        <div class="pill leaf"><img src="${ICON.leaf}">신선 ${fresh}</div>
+        ${soon>0?`<div class="pill warn"><img src="${ICON.flame}">곧상함 ${soon}</div>`:""}
+      </div>
+    </div>
+    <div class="tabs">
+      ${LOCATIONS.map(l=>`<button class="tab ${S.invTab===l.key?'on':''}" data-tab="${l.key}"><img src="${l.icon}">${l.label}</button>`).join("")}
+    </div>
+    <div class="grid">
+      ${items.map(invCell).join("")}
+      <div class="cell add" data-add><img src="${ICON.plus}"><div class="nm">추가</div></div>
+    </div>
+    ${items.length===0?'<div class="empty">아직 여긴 비어있어요.<br>+ 버튼으로 재료를 채워볼까요? 🐻</div>':''}
+  </div>`;
+}
+function invCell(it){
+  const f = freshness(it);
+  return `
+  <button class="cell" data-item="${it.id}">
+    <div class="dot" style="background:${f.color}"></div>
+    <div class="ico">${ingIcon(it.name,42)}</div>
+    <div class="nm">${esc(it.name)}</div>
+    <div class="qt" style="color:${f.soon?f.color:'var(--ink2)'}">${f.soon?f.label:esc(it.qty)}</div>
+  </button>`;
+}
+
+/* ---------- CHAT (꼬미 AI) ---------- */
+function viewChat(){
+  const online = !!S.apiKey;
+  return `
+  <div class="chat-head">
+    <div class="av"><img src="${ICON.komiHead}"></div>
+    <div style="flex:1">
+      <div class="nm">꼬미</div>
+      <div class="st ${online?'':'off'}"><i></i>${online?'레시피 상담중':'설정에서 API 키를 넣어줘'}</div>
+    </div>
+  </div>
+  <div class="msgs" id="msgs">${renderMsgs()}</div>
+  <div class="composer">
+    <input id="chatInput" placeholder="${online?'메시지를 입력하세요…':'먼저 MY에서 API 키를 등록해줘'}" ${online?'':'disabled'}>
+    <button class="send" id="sendBtn" ${online?'':'disabled'}>▶</button>
+  </div>`;
+}
+function renderMsgs(){
+  if(S.chat.length===0){
+    // intro + quick chips
+    return `
+      <div class="row">
+        <div class="av"><img src="${ICON.komiHead}"></div>
+        <div class="bub k">안녕! 나는 꼬미야 🐻\n냉장고에 뭐가 있는지 다 알고 있어.\n오늘은 뭔가 따뜻한 게 당기지 않아?</div>
+      </div>
+      <div class="chips" id="introChips">
+        <button class="chip hot" data-say="국물 있는 거 먹고 싶어!">국물 요리</button>
+        <button class="chip" data-say="간단하게 만들 수 있는 거 추천해줘">간단하게</button>
+        <button class="chip" data-say="든든한 한 끼 추천해줘">든든하게</button>
+        <button class="chip" data-say="곧 상할 재료부터 써먹고 싶어">곧 상할 재료로</button>
+      </div>`;
+  }
+  return S.chat.map(msgRow).join("");
+}
+function msgRow(m){
+  if(m.role==="user"){
+    return `<div class="row me"><div class="bub me">${esc(m.text)}</div></div>`;
+  }
+  let rec = "";
+  if(m.recipeId){
+    const r = RECIPES.find(x=>x.id===m.recipeId);
+    if(r){ const mt = recipeMatch(r);
+      rec = `<div class="rec-in-chat" data-recipe="${r.id}">
+        <div class="t"><img src="${asset(r.art+".png")}"></div>
+        <div><div class="nm">${esc(r.name)}</div><div class="mt">재료 ${mt.owned}/${mt.total} · ${r.time}분</div></div>
+      </div>`;
+    }
+  }
+  return `<div class="row">
+    <div class="av"><img src="${ICON.komiHead}"></div>
+    <div class="bub k">${m.text? esc(m.text) : '<span class="typing"><i></i><i></i><i></i></span>'}${rec}</div>
+  </div>`;
+}
+function afterChat(){
+  const box = $("#msgs"); if(box) box.scrollTop = box.scrollHeight;
+  const inp = $("#chatInput"), btn = $("#sendBtn");
+  if(btn) btn.onclick = ()=>sendChat(inp.value);
+  if(inp) inp.onkeydown = e=>{ if(e.key==="Enter") sendChat(inp.value); };
+}
+
+/* ---------- MY / settings ---------- */
+function viewMy(){
+  const has = !!S.apiKey;
+  return `
+  <div class="pad">
+    <div class="h-row"><div class="title-lg">MY</div></div>
+    <div class="komi-line">
+      <div class="mini-komi"><img src="${ICON.komiHead}"></div>
+      <div class="bub2">설정 다 여기 있어! 🐻</div>
+    </div>
+    <div class="set-list">
+      <div class="set-card">
+        <div class="set-row" style="margin-bottom:8px">
+          <h4 style="margin:0">🔑 Claude API 키</h4>
+          <span class="key-state ${has?'ok':'no'}">${has?'연결됨':'미설정'}</span>
+        </div>
+        <p>진짜 AI 꼬미와 대화하려면 Anthropic API 키가 필요해요. 키는 이 기기에만 저장되고 다른 곳으로 전송되지 않아요.</p>
+        <input id="apiKeyInput" type="password" placeholder="sk-ant-..." value="${esc(S.apiKey)}" autocomplete="off">
+        <div class="set-row" style="margin-top:10px">
+          <button class="linkbtn" id="saveKey">저장하기</button>
+          <a class="linkbtn" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">키 발급받기 ↗</a>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h4>🐻 꼬미 두뇌 (모델)</h4>
+        <p>빠르고 저렴한 Haiku가 기본이에요. 더 똑똑한 대화를 원하면 Sonnet·Opus로 바꿔보세요 (비용 ↑).</p>
+        <select id="modelSel">
+          <option value="claude-haiku-4-5"  ${S.model==='claude-haiku-4-5'?'selected':''}>Haiku 4.5 · 빠르고 저렴 (추천)</option>
+          <option value="claude-sonnet-4-6" ${S.model==='claude-sonnet-4-6'?'selected':''}>Sonnet 4.6 · 균형</option>
+          <option value="claude-opus-4-8"   ${S.model==='claude-opus-4-8'?'selected':''}>Opus 4.8 · 가장 똑똑</option>
+        </select>
+      </div>
+
+      <div class="set-card">
+        <h4>🧹 데이터</h4>
+        <p>재고 ${S.inv.length}개 · 대화 ${S.chat.length}개가 이 기기에 저장돼 있어요.</p>
+        <div class="set-row">
+          <button class="linkbtn" id="clearChat">대화 비우기</button>
+          <button class="linkbtn danger" id="resetAll">전부 초기화</button>
+        </div>
+      </div>
+
+      <div class="set-card">
+        <h4>🍳 꼬미의 부엌</h4>
+        <p>냉장고·식탁 재고를 기반으로 곰돌이 꼬미가 메뉴를 추천해주는 작은 앱이에요. 스타듀밸리 같은 코지 도트 감성으로 만들었어요. 맛있게 드세요! 🐻💕</p>
+      </div>
+    </div>
+  </div>`;
+}
+function afterMy(){
+  $("#saveKey").onclick = ()=>{
+    S.apiKey = $("#apiKeyInput").value.trim(); save();
+    toast(S.apiKey?"키를 저장했어요 🔑":"키를 지웠어요"); render();
+  };
+  $("#modelSel").onchange = e=>{ S.model = e.target.value; save(); toast("꼬미 두뇌를 바꿨어요 🐻"); };
+  $("#clearChat").onclick = ()=>{ S.chat=[]; save(); toast("대화를 비웠어요"); render(); };
+  $("#resetAll").onclick = ()=>{
+    if(confirm("재고·대화·설정을 모두 처음 상태로 되돌릴까요?")){
+      localStorage.removeItem(KEY); S = defaultState(); save(); S.screen="my"; render(); toast("처음 상태로 되돌렸어요 🐻");
+    }
+  };
+}
+
+/* ====================  BOTTOM NAV  ==================== */
+function renderNav(){
+  const tabs = [
+    {k:"home",  ic:ICON.home,   lb:"홈"},
+    {k:"fridge",ic:ICON.carrot, lb:"재료"},
+    {k:"__fab"},
+    {k:"chat",  ic:ICON.komiHead, lb:"꼬미"},
+    {k:"my",    ic:ICON.user,   lb:"MY"},
+  ];
+  $("#nav").innerHTML = tabs.map(t=>{
+    if(t.k==="__fab") return `<button class="fab" data-add><img src="${ICON.plusLt}"></button>`;
+    const on = S.screen===t.k;
+    return `<button class="${on?'on':''}" data-nav="${t.k}">
+      <div class="ib"><img src="${t.ic}"></div><span>${t.lb}</span></button>`;
+  }).join("");
+}
+
+/* ====================  ADD-INGREDIENT SHEET  ==================== */
+let addState = null;
+const PICK_LIST = ["당근","계란","양파","토마토","우유","버섯","감자","두부","대파","치즈","마늘","애호박"];
+function openAdd(){
+  addState = { name:"당근", count:1, unit:"개", loc:"fridge", dday:7, custom:"" };
+  renderAdd();
+}
+function renderAdd(){
+  const a = addState;
+  const sheet = $("#sheet");
+  sheet.classList.add("open");
+  sheet.innerHTML = `
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <div class="sheet-head"><button class="back" data-close>‹</button><div class="t">재료 추가</div></div>
+      <div class="sheet-body">
+        <div class="komi-line">
+          <div class="mini-komi"><img src="${ICON.komiHead}"></div>
+          <div class="bub2">뭘 채워둘까? 골라봐! 🐻</div>
+        </div>
+
+        <div class="lbl">재료 고르기</div>
+        <div class="pickgrid">
+          ${PICK_LIST.map(n=>`
+            <button class="pick ${a.name===n?'on':''}" data-pick="${n}">
+              <div class="ic">${ingIcon(n,34)}</div><div class="nm">${n}</div>
+            </button>`).join("")}
+        </div>
+
+        <div class="lbl">직접 입력</div>
+        <div class="field">
+          <label>이름</label>
+          <input id="customName" placeholder="예) 김치, 양배추…" value="${a.name && !PICK_LIST.includes(a.name)?esc(a.name):''}">
+        </div>
+
+        <div class="lbl">수량</div>
+        <div class="field" style="justify-content:space-between">
+          <div class="stepper">
+            <button data-cnt="-1">−</button>
+            <span class="val">${a.count}${esc(a.unit)}</span>
+            <button data-cnt="1">+</button>
+          </div>
+          <input id="unitInput" style="width:70px" value="${esc(a.unit)}" placeholder="단위">
+        </div>
+
+        <div class="lbl">보관 위치</div>
+        <div class="loc-row">
+          ${LOCATIONS.map(l=>`<button class="${a.loc===l.key?'on':''}" data-loc="${l.key}">${l.label}</button>`).join("")}
+        </div>
+
+        <div class="lbl">신선도 (며칠 안에 먹을까?)</div>
+        <div class="field" style="justify-content:space-between">
+          <label><img src="${ICON.clock}">유통기한</label>
+          <div class="stepper">
+            <button data-dd="-1">−</button>
+            <span class="val">${a.dday<=0?'오늘':'D-'+a.dday}</span>
+            <button data-dd="1">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="sheet-foot">
+        <button class="cta" id="addConfirm"><img src="${ICON.plusLt}">냉장고에 담기</button>
+      </div>
+    </div>`;
+  // events
+  sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
+  sheet.querySelectorAll("[data-loc]").forEach(b=>b.onclick=()=>{ a.loc=b.dataset.loc; renderAdd(); });
+  sheet.querySelectorAll("[data-cnt]").forEach(b=>b.onclick=()=>{ a.count=Math.max(1,a.count+(+b.dataset.cnt)); renderAdd(); });
+  sheet.querySelectorAll("[data-dd]").forEach(b=>b.onclick=()=>{ a.dday=Math.max(0,Math.min(365,a.dday+(+b.dataset.dd))); renderAdd(); });
+  const cn=$("#customName"); if(cn) cn.oninput=e=>{ a.name=e.target.value.trim()||a.name; };
+  const ui=$("#unitInput"); if(ui) ui.oninput=e=>{ a.unit=e.target.value.trim()||"개"; };
+  $("#addConfirm").onclick = confirmAdd;
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+}
+function confirmAdd(){
+  const a = addState;
+  const name = (($("#customName")&&$("#customName").value.trim()) || a.name || "").trim();
+  if(!name){ toast("재료 이름을 정해줘 🐻"); return; }
+  const unit = ($("#unitInput")&&$("#unitInput").value.trim())||a.unit||"개";
+  // merge with existing same-name+loc
+  const exist = S.inv.find(i=>i.name===name && i.loc===a.loc);
+  if(exist){ exist.qty = a.count+unit; exist.dday=a.dday; }
+  else S.inv.push({id:"i"+Date.now(), name, qty:a.count+unit, loc:a.loc, dday:a.dday});
+  save(); closeSheet();
+  S.invTab = a.loc; S.screen="fridge"; render();
+  toast(`${name} 담았어요! 🧺`);
+}
+
+/* ====================  ITEM DETAIL (edit/remove)  ==================== */
+function openItem(id){
+  const it = S.inv.find(i=>i.id===id); if(!it) return;
+  const f = freshness(it);
+  const sheet = $("#sheet"); sheet.classList.add("open");
+  sheet.innerHTML = `
+    <div class="scrim" data-close></div>
+    <div class="sheet">
+      <div class="sheet-head"><button class="back" data-close>‹</button><div class="t">${esc(it.name)}</div></div>
+      <div class="sheet-body">
+        <div style="display:flex;gap:14px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 4px 0 var(--shadow);margin-bottom:16px">
+          <div style="width:64px;height:64px;background:var(--pink);border:2px solid var(--line2);border-radius:12px;display:flex;align-items:center;justify-content:center">${ingIcon(it.name,46)}</div>
+          <div>
+            <div style="font-weight:700;font-size:16px;color:var(--ink);margin-bottom:5px">${esc(it.name)}</div>
+            <div style="font-size:12px;color:var(--ink2)">${esc(it.qty)} · ${LOCATIONS.find(l=>l.key===it.loc).label}</div>
+            <div style="font-size:11px;color:${f.color};margin-top:4px">● ${f.soon?f.label+' (곧 상함)':'신선해요'}</div>
+          </div>
+        </div>
+        <div class="lbl">수량 수정</div>
+        <div class="field"><label>수량</label><input id="editQty" value="${esc(it.qty)}"></div>
+        <div class="lbl">유통기한</div>
+        <div class="field" style="justify-content:space-between">
+          <label><img src="${ICON.clock}">D-day</label>
+          <div class="stepper">
+            <button id="ddm">−</button><span class="val" id="ddv">${it.dday<=0?'오늘':'D-'+it.dday}</span><button id="ddp">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="sheet-foot" style="display:flex;gap:10px">
+        <button class="linkbtn danger" id="delItem" style="flex:1;text-align:center">다 썼어요 🗑</button>
+        <button class="cta green" id="saveItem" style="flex:2"><img src="${ICON.clockLt}">저장</button>
+      </div>
+    </div>`;
+  let dd = it.dday;
+  $("#ddm").onclick=()=>{ dd=Math.max(0,dd-1); $("#ddv").textContent=dd<=0?'오늘':'D-'+dd; };
+  $("#ddp").onclick=()=>{ dd=Math.min(365,dd+1); $("#ddv").textContent=dd<=0?'오늘':'D-'+dd; };
+  $("#saveItem").onclick=()=>{ it.qty=$("#editQty").value.trim()||it.qty; it.dday=dd; save(); closeSheet(); render(); toast("수정했어요 ✏️"); };
+  $("#delItem").onclick=()=>{ S.inv=S.inv.filter(x=>x.id!==id); save(); closeSheet(); render(); toast(`${it.name} 비웠어요`); };
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+}
+
+/* ====================  RECIPE DETAIL SHEET  ==================== */
+function openRecipe(id){
+  const r = RECIPES.find(x=>x.id===id); if(!r) return;
+  const m = recipeMatch(r);
+  const have = invNames();
+  const sheet = $("#sheet"); sheet.classList.add("open");
+  const ingRow = (x,isSauce)=>{
+    const owned = have.has(x.n);
+    return `<div class="ing-row ${owned?'':'miss'}">
+      <div class="ic">${ingIcon(x.n,22)}</div>
+      <div class="nm">${esc(x.n)} ${(!owned)?'<small>· 부족</small>':''}</div>
+      ${owned?`<div class="amt">${esc(x.a)}</div>`:`<div class="have" style="background:var(--terra);color:#fff">담기</div>`}
+    </div>`;
+  };
+  sheet.innerHTML = `
+    <div class="scrim" data-close></div>
+    <div class="sheet" style="max-height:94%">
+      <div class="rd-hero">
+        <button class="back" data-close style="position:absolute;top:14px;left:16px;width:34px;height:34px;background:var(--bg);border:2px solid var(--line);border-radius:50%;font-size:18px;color:var(--line);z-index:5">‹</button>
+        <div class="icon"><img src="${asset(r.art+".png")}"></div>
+      </div>
+      <div class="sheet-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <div style="font-weight:700;font-size:19px;color:var(--ink)">${esc(r.name)}</div>
+          <div style="display:flex;align-items:center;gap:4px;background:#eef3e3;border-radius:7px;padding:4px 8px;font-size:11px;color:var(--green-d)"><img src="${ICON.leaf}" style="width:12px;height:12px">재료 ${m.owned}/${m.total}</div>
+        </div>
+        <div class="rd-meta">
+          <div class="m"><img src="${ICON.clock}">${r.time}분</div>
+          <div class="m"><img src="${ICON.star}">${r.level}</div>
+          <div class="m"><img src="${ICON.user}">${r.servings}인분</div>
+        </div>
+
+        <div class="komi-line">
+          <div class="mini-komi"><img src="${ICON.komiHead}"></div>
+          <div class="bub2">${m.missing.length? `${esc(m.missing[0].n)}만 있으면 완성이야!` : '재료 다 있어! 바로 만들 수 있어 :)'}</div>
+        </div>
+
+        <div class="sub-lbl"><img src="${ICON.leaf}">필요한 재료</div>
+        ${r.ingredients.map(x=>ingRow(x,false)).join("")}
+
+        <div class="sub-lbl"><img src="${ICON.sauce}">양념</div>
+        ${r.sauce.map(x=>ingRow(x,true)).join("")}
+
+        <div class="sub-lbl"><img src="${ICON.clock}">만드는 법</div>
+        ${r.steps.map((s,i)=>`<div class="ing-row"><div class="ic" style="background:var(--tan2)"><b style="font-size:13px;color:var(--line)">${i+1}</b></div><div class="nm" style="line-height:1.5">${esc(s)}</div></div>`).join("")}
+      </div>
+      <div class="sheet-foot">
+        <button class="cta green" id="cookBtn"><img src="${ICON.clockLt}">요리 시작하기</button>
+      </div>
+    </div>`;
+  $("#cookBtn").onclick = ()=>{
+    closeSheet();
+    toast(`${r.name} 시작! 맛있게 만들어요 🍳`);
+  };
+  sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+}
+
+function closeSheet(){ const s=$("#sheet"); s.classList.remove("open"); s.innerHTML=""; }
+
+/* ====================  CLAUDE API — 꼬미 채팅  ==================== */
+function komiSystemPrompt(){
+  const inv = S.inv.map(i=>`- ${i.name} ${i.qty} (${LOCATIONS.find(l=>l.key===i.loc).label}, ${i.dday<=2?'곧 상함 D-'+i.dday:'신선'})`).join("\n");
+  const recipes = RECIPES.map(r=>{
+    const m = recipeMatch(r);
+    return `- ${r.name} (id:${r.id}, ${r.time}분, ${r.level}, 보유재료 ${m.owned}/${m.total}, 필요: ${r.ingredients.map(x=>x.n).join("·")})`;
+  }).join("\n");
+  return `너는 '꼬미'라는 이름의 귀여운 곰돌이 요리 친구야. 사용자의 냉장고를 책임지고 메뉴를 추천해줘.
+
+[성격]
+- 따뜻하고 다정하고 친근한 반말체. 스타듀밸리 같은 코지한 분위기.
+- 짧고 담백하게 말해. 보통 2~4문장. 가끔 :) 나 🐻 같은 이모지를 살짝.
+- 요리/식재료/메뉴 이야기에 집중해. 사용자가 가진 재료를 적극 활용해서 추천해.
+
+[지금 사용자 냉장고/팬트리 재고]
+${inv}
+
+[추천 가능한 레시피 목록]
+${recipes}
+
+[추천 규칙]
+- 가능하면 위 레시피 목록 안에서 골라 추천해. 보유 재료가 많은 것, 그리고 곧 상하는 재료를 쓰는 걸 우선해.
+- 레시피 하나를 콕 집어 추천할 때는, 답변 맨 마지막 줄에 반드시 이 형식으로 표시해: [[recipe:레시피id]]
+  (예: [[recipe:kimchi_jjigae]]) — 이 태그는 카드로 보여줄 거니까 정확한 id를 써. 추천이 아니면 태그를 넣지 마.
+- 재고에 없는 재료가 필요하면 솔직하게 알려주되, 너무 길게 늘어놓지는 마.`;
+}
+
+async function sendChat(text){
+  text = (text||"").trim();
+  if(!text) return;
+  if(!S.apiKey){ toast("MY에서 API 키부터 등록해줘 🔑"); return; }
+
+  // push user msg + placeholder assistant
+  S.chat.push({role:"user", text});
+  const aIdx = S.chat.push({role:"assistant", text:""}) - 1;
+  save();
+  // re-render chat preserving input cleared
+  rerenderChatPartial();
+
+  // build message history for API (strip recipe tags from prior assistant msgs is fine)
+  const messages = S.chat.slice(0, aIdx).map(m=>({
+    role: m.role==="user"?"user":"assistant",
+    content: m.text || "…"
+  })).filter(m=>m.content.trim());
+
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "content-type":"application/json",
+        "x-api-key":S.apiKey,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true",
+      },
+      body: JSON.stringify({
+        model: S.model || "claude-haiku-4-5",
+        max_tokens: 600,
+        system: komiSystemPrompt(),
+        messages,
+        stream: true,
+      }),
+    });
+    if(!res.ok){
+      let info=""; try{ const j=await res.json(); info = j.error?.message||""; }catch(e){}
+      throw new Error((res.status===401?"API 키가 올바른지 확인해줘.":info)|| ("오류 "+res.status));
+    }
+    // stream SSE
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf="", acc="";
+    while(true){
+      const {value,done} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for(const line of lines){
+        const t = line.trim();
+        if(!t.startsWith("data:")) continue;
+        const payload = t.slice(5).trim();
+        if(payload==="[DONE]") continue;
+        try{
+          const ev = JSON.parse(payload);
+          if(ev.type==="content_block_delta" && ev.delta?.type==="text_delta"){
+            acc += ev.delta.text;
+            S.chat[aIdx].text = stripTag(acc);
+            updateLastBubble(S.chat[aIdx]);
+          }
+        }catch(e){}
+      }
+    }
+    // finalize: parse recipe tag
+    const tag = acc.match(/\[\[recipe:([a-z_]+)\]\]/);
+    S.chat[aIdx].text = stripTag(acc).trim() || "음… 뭐가 좋을까? 🐻";
+    if(tag && RECIPES.some(r=>r.id===tag[1])) S.chat[aIdx].recipeId = tag[1];
+    save();
+    rerenderChatPartial();
+  }catch(err){
+    S.chat[aIdx].text = "앗, 연결에 문제가 생겼어 🐻\n"+(err.message||"잠시 후 다시 시도해줘.");
+    save(); rerenderChatPartial();
+  }
+}
+function stripTag(s){ return s.replace(/\[\[recipe:[a-z_]+\]\]/g,"").trim(); }
+
+function rerenderChatPartial(){
+  const box = $("#msgs");
+  if(!box){ render(); return; }
+  box.innerHTML = renderMsgs();
+  bindChatBody();
+  box.scrollTop = box.scrollHeight;
+}
+function updateLastBubble(m){
+  const box = $("#msgs"); if(!box) return;
+  const rows = box.querySelectorAll(".row");
+  const last = rows[rows.length-1];
+  if(last){ const bub = last.querySelector(".bub.k"); if(bub){ bub.textContent = m.text || ""; } }
+  box.scrollTop = box.scrollHeight;
+}
+function bindChatBody(){
+  document.querySelectorAll("#introChips .chip").forEach(c=>c.onclick=()=>sendChat(c.dataset.say));
+  document.querySelectorAll("#msgs [data-recipe]").forEach(c=>c.onclick=()=>openRecipe(c.dataset.recipe));
+}
+
+/* ====================  GLOBAL EVENT DELEGATION  ==================== */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-nav],[data-add],[data-tab],[data-item],[data-recipe],[data-go-fridge],[data-pick]");
+  if(!t) return;
+  if(t.hasAttribute("data-nav")){ S.screen=t.dataset.nav; render(); }
+  else if(t.hasAttribute("data-add")){ openAdd(); }
+  else if(t.hasAttribute("data-go-fridge")){ S.screen="fridge"; render(); }
+  else if(t.hasAttribute("data-tab")){ S.invTab=t.dataset.tab; render(); }
+  else if(t.hasAttribute("data-item")){ openItem(t.dataset.item); }
+  else if(t.hasAttribute("data-recipe") && !t.closest("#sheet")){ openRecipe(t.dataset.recipe); }
+});
+
+/* ====================  BOOT  ==================== */
+render();
+</script>
+</body>
+</html>
