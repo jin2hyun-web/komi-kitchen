@@ -981,7 +981,7 @@ async function komiViaCLI(aIdx){
   const prompt = conv + "\n\n위 대화에 이어, 꼬미로서 다음 한 마디만 자연스럽게 답해줘. 레시피를 콕 집어 추천할 땐 마지막 줄에 [[recipe:레시피id]] 형식으로 표시해줘.";
   try{
     const res = await fetch("api/komi",{
-      method:"POST", headers:{"content-type":"application/json"},
+      method:"POST", headers:{"content-type":"application/json","ngrok-skip-browser-warning":"1"},
       body: JSON.stringify({ system: komiSystemPrompt(), prompt })
     });
     if(!res.ok){ let m=""; try{ m=(await res.json()).error||""; }catch(e){} throw new Error(m || ("오류 "+res.status)); }
@@ -1031,7 +1031,7 @@ document.addEventListener("click", e=>{
 
 /* ============  CLI(로컬) 두뇌 자동 감지 + BOOT  ============ */
 let CLI = false;
-fetch("api/health").then(r=>r.ok?r.json():null).then(j=>{
+fetch("api/health",{headers:{"ngrok-skip-browser-warning":"1"}}).then(r=>r.ok?r.json():null).then(j=>{
   if(j && j.mode==="cli"){ CLI = true; if(S.screen==="chat") render(); }
 }).catch(()=>{});
 render();
