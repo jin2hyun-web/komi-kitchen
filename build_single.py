@@ -25,7 +25,12 @@ def main():
         print("⚠️  assets/ 에 png가 없어요. 먼저 에셋을 받아주세요.", file=sys.stderr)
         sys.exit(1)
 
-    # 2) inject window.AP just before the main script (which defines asset()).
+    # 2a) inline static asset refs in HTML attributes (e.g. <link href="assets/...">).
+    #     (JS는 asset()+window.AP로 처리되므로 여기선 정적 href/src만 치환)
+    for name, uri in ap.items():
+        html = html.replace("assets/" + name, uri)
+
+    # 2b) inject window.AP just before the main script (which defines asset()).
     inject = "<script>window.AP=" + json.dumps(ap) + ";</script>\n"
     marker = '<script>\n"use strict";'
     if marker not in html:
