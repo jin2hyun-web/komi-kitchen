@@ -289,9 +289,26 @@ const ICON = {
 };
 // ingredients that have dedicated pixel art
 const FOOD_ART = {
+  // 정교한 수제 도트 (원본)
   "당근":"food_carrot","계란":"food_egg","우유":"food_milk","토마토":"food_tomato",
   "감자":"food_potato","두부":"food_tofu","대파":"food_greenonion","치즈":"food_cheese",
   "양파":"food_onion","버섯":"food_mushroom","다진마늘":"food_garlic","마늘":"food_garlic",
+  // 심플 픽셀 50+종 (한국 마트 단골)
+  "간장":"food_soysauce","식초":"food_vinegar","식용유":"food_oil","참기름":"food_sesameoil",
+  "굴소스":"food_oystersauce","케첩":"food_ketchup","마요네즈":"food_mayo","고추장":"food_gochujang",
+  "된장":"food_doenjang","쌈장":"food_ssamjang","고춧가루":"food_chilipowder","카레":"food_curry",
+  "라면":"food_ramen","밀가루":"food_flour","쌀가루":"food_ricepowder","부침가루":"food_buchimgaru",
+  "설탕":"food_sugar","소금":"food_salt","전분":"food_starch","쌀":"food_rice","밥":"food_cookedrice",
+  "소면":"food_somyeon","당면":"food_dangmyeon","파스타면":"food_pastanoodle","옥수수면":"food_cornnoodle",
+  "우동":"food_udon","참치캔":"food_tunacan","옥수수캔":"food_corncan","김":"food_gim",
+  "돼지고기":"food_pork","소고기":"food_beef","닭고기":"food_chicken","고등어":"food_mackerel",
+  "새우":"food_shrimp","햄":"food_ham","어묵":"food_eomuk","베이컨":"food_bacon","소세지":"food_sausage",
+  "배추":"food_napa","양배추":"food_cabbage","시금치":"food_spinach","상추":"food_lettuce",
+  "깻잎":"food_perilla","부추":"food_chive","무":"food_radish","오이":"food_cucumber",
+  "가지":"food_eggplant","고추":"food_chili","브로콜리":"food_broccoli","콩나물":"food_beansprout",
+  "생강":"food_ginger","파프리카":"food_paprika","사과":"food_apple","귤":"food_tangerine",
+  "바나나":"food_banana","딸기":"food_strawberry","포도":"food_grape","버터":"food_butter",
+  "요거트":"food_yogurt","식빵":"food_bread","떡":"food_tteok",
 };
 // fallback colored swatch for ingredients without art (김치, 고춧가루…)
 const SWATCH = {
@@ -777,9 +794,18 @@ function renderNav(){
 
 /* ====================  ADD-INGREDIENT SHEET  ==================== */
 let addState = null;
-const PICK_LIST = ["당근","계란","양파","토마토","우유","버섯","감자","두부","대파","치즈","마늘","애호박","돼지고기","김치"];
+// 카테고리별 빠른 선택 (아이콘 등록)
+const CATS = [
+  {key:"veg",   label:"🥬 채소",      items:["당근","양파","대파","감자","토마토","애호박","오이","무","배추","양배추","시금치","상추","깻잎","부추","고추","브로콜리","콩나물","버섯","파프리카","가지","마늘","생강"]},
+  {key:"meat",  label:"🍖 고기·해산물", items:["돼지고기","소고기","닭고기","계란","고등어","새우","햄","어묵","베이컨","소세지"]},
+  {key:"grain", label:"🌾 가루·면·밥",  items:["쌀","밥","밀가루","쌀가루","부침가루","전분","설탕","소금","소면","당면","파스타면","옥수수면","우동","라면","떡","식빵"]},
+  {key:"sauce", label:"🧂 양념·소스",   items:["간장","고추장","된장","쌈장","고춧가루","식용유","참기름","굴소스","케첩","마요네즈","식초","카레"]},
+  {key:"can",   label:"🥫 유제품·기타", items:["우유","치즈","버터","요거트","두부","김치","김","참치캔","옥수수캔"]},
+  {key:"fruit", label:"🍎 과일",        items:["사과","귤","바나나","딸기","포도"]},
+];
+const ALL_PICK = new Set(CATS.flatMap(c=>c.items));
 function openAdd(){
-  addState = { mode:"pick", name:"당근", count:1, unit:"개", loc:"fridge", dday:7,
+  addState = { mode:"pick", cat:"veg", name:"당근", count:1, unit:"개", loc:"fridge", dday:7,
                quick:"", scanItems:null, scanning:false, scanErr:"", batchLoc:"fridge" };
   renderAdd();
 }
@@ -831,16 +857,19 @@ function renderAdd(){
       </div>
       <button class="cta green" id="quickBtn" style="height:46px;margin-bottom:20px"><img src="${ICON.plusLt}">한번에 담기</button>
 
-      <div class="lbl">또는 하나씩 — 재료 고르기</div>
+      <div class="lbl">또는 하나씩 — 골라서 담기</div>
+      <div class="tabs" style="margin-bottom:10px">
+        ${CATS.map(c=>`<button class="tab ${a.cat===c.key?'on':''}" data-cat="${c.key}">${c.label}</button>`).join("")}
+      </div>
       <div class="pickgrid">
-        ${PICK_LIST.map(n=>`
+        ${(CATS.find(c=>c.key===a.cat)||CATS[0]).items.map(n=>`
           <button class="pick ${a.name===n?'on':''}" data-pick="${n}">
             <div class="ic">${ingIcon(n,34)}</div><div class="nm">${n}</div>
           </button>`).join("")}
       </div>
       <div class="field">
         <label>이름</label>
-        <input id="customName" placeholder="예) 양배추…" value="${a.name && !PICK_LIST.includes(a.name)?esc(a.name):''}">
+        <input id="customName" placeholder="예) 양배추…" value="${a.name && !ALL_PICK.has(a.name)?esc(a.name):''}">
       </div>
       <div class="lbl">수량</div>
       <div class="field" style="justify-content:space-between">
@@ -927,6 +956,7 @@ function renderAdd(){
       const n=addItems(items, a.loc, a.dday);
       closeSheet(); S.invTab=a.loc; S.screen="fridge"; render(); toast(`${n}개 담았어요! 🧺`);
     };
+    sheet.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{ a.cat=b.dataset.cat; renderAdd(); });
     sheet.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{ a.name=b.dataset.pick; const ci=$("#customName"); if(ci) ci.value=""; renderAdd(); });
     sheet.querySelectorAll("[data-loc]").forEach(b=>b.onclick=()=>{ a.loc=b.dataset.loc; renderAdd(); });
     sheet.querySelectorAll("[data-cnt]").forEach(b=>b.onclick=()=>{ a.count=Math.max(1,a.count+(+b.dataset.cnt)); renderAdd(); });
